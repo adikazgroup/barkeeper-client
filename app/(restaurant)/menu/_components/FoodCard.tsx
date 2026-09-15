@@ -42,7 +42,7 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
   const priced = variants.length > 1;
   const [open, setOpen] = useState(false);
 
-  const { addItem } = useCart();
+  const { addItem, pending } = useCart();
 
   // A plate with exactly one priced size has no choice to offer, so it adds
   // like a single-price plate — but it is still that size that goes on the
@@ -50,34 +50,26 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
   const soleVariant = variants.length === 1 ? variants[0] : null;
 
   /**
-   * Put a plate on the docket at the figure the card is printing — the offer
-   * when one is live, the list price otherwise. A plate the kitchen has left
-   * unpriced cannot be ordered from here at all; the add control is not drawn.
+   * Put a plate on the docket.
+   *
+   * Only the dish and its tier travel: the kitchen prices the line, so nothing
+   * here sends a figure it read off the card. It can also refuse — a required
+   * option group unanswered, a tier sold out, a dish outside its serving
+   * window — and when it does, its own words are what the customer sees,
+   * because only the backend knows which of those it was.
    */
-  const addToCart = (variant?: FoodVariant) => {
-    const { payable, struck } = payableOf(
-      variant ? variant.price : item.price,
-      variant ? variant.offerPrice : item.offerPrice,
-    );
-    if (payable === null) return;
+  const addToCart = async (variant?: FoodVariant) => {
+    setOpen(false);
 
-    addItem({
+    const label = variant ? `${item.name} (${variant.label})` : item.name;
+    const { ok, message } = await addItem({
       foodId: item._id,
-      name: item.name,
-      slug: item.slug,
-      image: item.image?.url ?? null,
       variantLabel: variant?.label ?? null,
-      categoryName: item.category?.name ?? null,
-      unitPrice: payable,
-      listPrice: struck,
+      quantity: 1,
     });
 
-    setOpen(false);
-    toast.success(
-      variant
-        ? `${item.name} (${variant.label}) added to cart`
-        : `${item.name} added to cart`,
-    );
+    if (ok) toast.success(`${label} added to cart`);
+    else toast.error(message);
   };
 
   // Multi-size plates are ordered from the size panel, so they are addable as
@@ -161,6 +153,7 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
                   <button
                     type="button"
                     onClick={() => addToCart(variant)}
+                    disabled={pending}
                     aria-label={`Add ${item.name}, ${variant.label}, to cart`}
                     className="-mx-1.5 flex w-[calc(100%+0.75rem)] cursor-pointer items-baseline gap-2 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
@@ -253,6 +246,7 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
               onClick={() =>
                 priced ? setOpen(true) : addToCart(soleVariant ?? undefined)
               }
+              disabled={pending}
               aria-expanded={priced ? open : undefined}
               aria-controls={priced ? `${item.slug}-sizes` : undefined}
               aria-label={
@@ -260,7 +254,7 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
                   ? `Choose a size for ${item.name}`
                   : `Add ${item.name} to cart`
               }
-              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-transparent hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-transparent hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ShoppingBagIcon aria-hidden className="size-4" />
               {priced ? "Choose size" : "Add to cart"}

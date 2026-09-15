@@ -21,19 +21,7 @@ export {
   type FaqItem,
 } from "./faq";
 
-export { POPULAR_DISHES, type Dish } from "./dishes";
-
 export { FEATURES, feature, type Feature } from "./features";
-
-export {
-  MENU_CATEGORIES,
-  MENU_GROUPS,
-  categoriesInGroup,
-  type MenuCategory,
-  type MenuGroup,
-  type MenuGroupId,
-  type MenuIcon,
-} from "./menu";
 
 export {
   PROMOTIONS,

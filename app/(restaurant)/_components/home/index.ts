@@ -8,6 +8,8 @@ export { HowItWorks } from "./HowItWorks";
 export { IntegrationMarquee } from "./IntegrationMarquee";
 export { Logo } from "./Logo";
 export { PopularDishes } from "./PopularDishes";
+export { PopularDishesGrid } from "./PopularDishesGrid";
+export { PromoBanner } from "./PromoBanner";
 export { Promotions } from "./Promotions";
 export { Reveal } from "./Reveal";
 export { ServiceStrip } from "./ServiceStrip";

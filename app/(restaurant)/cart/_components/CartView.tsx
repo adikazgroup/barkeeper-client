@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Info } from "lucide-react";
+import { Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,7 +14,8 @@ import {
   XIcon,
 } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
-import { type CartLine } from "@/hooks/useCart";
+import { useCart, type CartItem } from "@/hooks/useCart";
+import { AUTH_ROUTES } from "@/lib/auth/constants";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import foodPlaceholder from "@/public/food/RedChili_DoubleSmashBurger2.png";
@@ -24,7 +25,6 @@ import {
   staggerChild,
   staggerParent,
 } from "../../_components/home/Reveal";
-import { useCartOrDemo } from "./demoCart";
 
 /** The board the reader came from, and where an empty cart sends them back. */
 const MENU_HREF = "/menu";
@@ -41,18 +41,45 @@ const CELL = "px-5 sm:px-8";
  * one box, split by a single rule, so the cart reads as the last section of the
  * site rather than a checkout bolted onto it.
  *
- * Everything here is read out of the browser's stored cart, so the whole panel
- * waits on `hydrated` rather than painting an empty cart the customer then
- * watches fill itself in.
+ * Everything here is the kitchen's own priced docket, read back over the cart
+ * API, so the whole panel waits on `hydrated` rather than painting an empty
+ * cart the customer then watches fill itself in. No figure on this page is
+ * worked out here: the line totals, the subtotal and whether the docket can be
+ * sent are all the backend's, because it is the side that knows what a plate
+ * costs once its options are on it.
  */
 export function CartView() {
-  const { items, count, subtotal, hydrated, setQuantity, removeItem, clear } =
-    useCartOrDemo();
+  const {
+    items,
+    count,
+    subtotal,
+    issues,
+    isOrderable,
+    hydrated,
+    pending,
+    signedOut,
+    setQuantity,
+    removeItem,
+    clear,
+  } = useCart();
 
   if (!hydrated) return <CartSkeleton />;
+  // The docket belongs to an account, so there is nothing to show a visitor
+  // who has not signed in — and nothing they could send if there were.
+  if (signedOut) return <SignedOutCart />;
   if (items.length === 0) return <EmptyCart />;
 
   const handleCheckout = () => {
+    // A dish can sell out after it was added, so the backend's own verdict is
+    // what decides whether this goes anywhere.
+    if (!isOrderable) {
+      toast.error(
+        issues[0]?.message ??
+          "Something on the docket is unavailable. Check the lines above.",
+      );
+      return;
+    }
+
     // Nothing takes payment yet. Saying so is better than a button that looks
     // like it worked.
     toast(
@@ -83,8 +110,9 @@ export function CartView() {
 
                 <button
                   type="button"
-                  onClick={clear}
-                  className="cursor-pointer font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  onClick={() => void clear()}
+                  disabled={pending}
+                  className="cursor-pointer font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Clear docket
                 </button>
@@ -100,8 +128,9 @@ export function CartView() {
               >
                 {items.map((line) => (
                   <CartRow
-                    key={line.id}
+                    key={line._id}
                     line={line}
+                    pending={pending}
                     onQuantity={setQuantity}
                     onRemove={removeItem}
                   />
@@ -155,12 +184,36 @@ export function CartView() {
                   </div>
                 </dl>
 
+                {/* Whatever is blocking the whole docket, in the backend's own
+                    words — it is the only side that knows which of a dozen
+                    reasons it was. */}
+                {issues.length > 0 && (
+                  <ul
+                    role="list"
+                    className="mt-6 space-y-2 rounded-xl border border-danger/30 bg-danger/5 px-3.5 py-3"
+                  >
+                    {issues.map((issue) => (
+                      <li
+                        key={`${issue.code}-${issue.message}`}
+                        className="flex items-start gap-2 text-[12.5px] leading-[1.6] text-foreground"
+                      >
+                        <TriangleAlert
+                          aria-hidden
+                          className="mt-0.5 size-3.5 shrink-0 text-danger"
+                        />
+                        {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 {/* The hero's pill button, so the one thing left to do looks
                     like every other primary ask on the site. */}
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  className="group mt-7 flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  disabled={pending || !isOrderable}
+                  className="group mt-7 flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   Send to the kitchen
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
@@ -187,25 +240,32 @@ export function CartView() {
 
 function CartRow({
   line,
+  pending,
   onQuantity,
   onRemove,
 }: {
-  line: CartLine;
-  onQuantity: (id: string, quantity: number) => void;
-  onRemove: (id: string) => void;
+  line: CartItem;
+  pending: boolean;
+  onQuantity: (itemId: string, quantity: number) => void;
+  onRemove: (itemId: string) => void;
 }) {
-  const lineTotal = Math.round(line.unitPrice * line.quantity * 100) / 100;
+  // The kitchen prices the line, options and all, so the figure is read off
+  // the docket rather than multiplied here.
+  const blocked = line.isOrderable === false;
 
   return (
-    <motion.li variants={staggerChild} className={cn("flex gap-4 py-6", CELL)}>
+    <motion.li
+      variants={staggerChild}
+      className={cn("flex gap-4 py-6", CELL, blocked && "bg-danger/4")}
+    >
       {/* Square, framed and padded like the board's cards: the photographs are
           landscape, so a taller frame crops the plate rather than showing more
           of it. */}
       <div className="size-20 shrink-0 rounded-2xl border border-border/60 bg-card p-1.5 sm:size-24">
         <div className="relative size-full overflow-hidden rounded-xl bg-muted">
           <SafeImage
-            src={line.image || foodPlaceholder}
-            alt={line.name}
+            src={line.image?.url || foodPlaceholder}
+            alt={line.image?.alt || line.name}
             fill
             fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
             className="object-cover"
@@ -223,28 +283,69 @@ function CartRow({
 
             <p className="mt-2 flex items-center gap-2 text-[13px] text-muted-foreground">
               <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 font-mono text-[10px] tracking-[0.14em] whitespace-nowrap uppercase">
-                {line.variantLabel ?? line.categoryName ?? "Regular"}
+                {line.variantLabel ?? "Regular"}
               </span>
 
               <span className="truncate">
-                {line.listPrice != null && (
-                  <span className="mr-1.5 tabular-nums line-through opacity-60">
-                    {formatMoney(line.listPrice)}
-                  </span>
-                )}
                 <span className="tabular-nums">
                   {formatMoney(line.unitPrice)}
                 </span>{" "}
                 each
               </span>
             </p>
+
+            {/* How this one was built. Two lines of the same dish differ only
+                here, so it is what tells them apart on the docket. */}
+            {line.modifiers && line.modifiers.length > 0 && (
+              <ul
+                role="list"
+                className="mt-2 space-y-0.5 text-[12px] leading-[1.6] text-muted-foreground"
+              >
+                {line.modifiers.map((modifier) => (
+                  <li
+                    key={`${modifier.groupId}-${modifier.optionName}`}
+                    className="truncate"
+                  >
+                    {modifier.quantity > 1 && `${modifier.quantity}× `}
+                    {modifier.optionName}
+                    {modifier.lineTotal > 0 && (
+                      <span className="ml-1 tabular-nums">
+                        +{formatMoney(modifier.lineTotal)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {line.specialInstructions && (
+              <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground italic">
+                &ldquo;{line.specialInstructions}&rdquo;
+              </p>
+            )}
+
+            {/* Why this line cannot be sent — sold out, off the window. The
+                backend's words, because it is the side that knows. */}
+            {line.issues?.map((issue) => (
+              <p
+                key={`${issue.code}-${issue.message}`}
+                className="mt-2 flex items-start gap-1.5 text-[12px] leading-[1.6] text-danger"
+              >
+                <TriangleAlert
+                  aria-hidden
+                  className="mt-0.5 size-3.5 shrink-0"
+                />
+                {issue.message}
+              </p>
+            ))}
           </div>
 
           <button
             type="button"
-            onClick={() => onRemove(line.id)}
+            onClick={() => onRemove(line._id)}
+            disabled={pending}
             aria-label={`Remove ${line.name} from cart`}
-            className="shrink-0 cursor-pointer rounded-full border border-transparent p-1.5 text-muted-foreground transition-colors duration-200 hover:border-border hover:bg-card hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="shrink-0 cursor-pointer rounded-full border border-transparent p-1.5 text-muted-foreground transition-colors duration-200 hover:border-border hover:bg-card hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <XIcon className="size-4" />
           </button>
@@ -254,13 +355,14 @@ function CartRow({
           <div className="inline-flex items-center rounded-full border border-border bg-card/60 backdrop-blur-sm">
             <button
               type="button"
-              onClick={() => onQuantity(line.id, line.quantity - 1)}
+              onClick={() => onQuantity(line._id, line.quantity - 1)}
+              disabled={pending}
               aria-label={
                 line.quantity === 1
                   ? `Remove ${line.name} from cart`
                   : `Decrease quantity of ${line.name}`
               }
-              className="cursor-pointer rounded-l-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="cursor-pointer rounded-l-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MinusIcon className="size-3.5" />
             </button>
@@ -274,20 +376,71 @@ function CartRow({
 
             <button
               type="button"
-              onClick={() => onQuantity(line.id, line.quantity + 1)}
+              onClick={() => onQuantity(line._id, line.quantity + 1)}
+              disabled={pending}
               aria-label={`Increase quantity of ${line.name}`}
-              className="cursor-pointer rounded-r-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="cursor-pointer rounded-r-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <PlusIcon className="size-3.5" />
             </button>
           </div>
 
           <span className="font-mono text-[15px] tabular-nums">
-            {formatMoney(lineTotal)}
+            {formatMoney(line.lineTotal)}
           </span>
         </div>
       </div>
     </motion.li>
+  );
+}
+
+/**
+ * The docket is kept by the kitchen, against an account — that is what lets it
+ * be priced live and survive a change of device. So a signed-out visitor is
+ * not shown an empty cart, which would suggest theirs had been lost; they are
+ * shown the one thing that gets them one.
+ */
+function SignedOutCart() {
+  return (
+    <section>
+      <div className="mx-auto max-w-7xl">
+        <div className="border-x border-border/50 px-5 py-20 text-center sm:px-8 sm:py-28">
+          <Reveal className="mx-auto max-w-[46ch]">
+            <span className="mx-auto grid size-11 place-items-center rounded-full border border-border bg-card text-muted-foreground">
+              <ShoppingBagIcon className="size-4.5" />
+            </span>
+
+            <h2 className="mx-auto mt-7 max-w-[20ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[30px] leading-[1.05] font-medium tracking-[-0.04em] text-transparent sm:text-[40px]">
+              Sign in to start an order
+            </h2>
+
+            <p className="mt-5 text-[14px] leading-[1.7] text-muted-foreground">
+              The kitchen keeps your docket, so it is priced as you build it and
+              it is still there on your phone at the table.
+            </p>
+
+            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href={AUTH_ROUTES.login}
+                className="group inline-flex h-11 w-full items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:w-auto"
+              >
+                Sign in
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
+                  <ChevronRightIcon className="size-4" />
+                </span>
+              </Link>
+
+              <Link
+                href={MENU_HREF}
+                className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium transition-colors duration-200 hover:bg-foreground hover:text-background sm:w-auto"
+              >
+                Browse the board
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
   );
 }
 

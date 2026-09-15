@@ -1,73 +1,134 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import {
   addItem,
-  clear,
+  clearCart,
   getServerSnapshot,
   getSnapshot,
+  refresh,
   removeItem,
-  setQuantity,
   subscribe,
-  type CartLine,
-} from "@/lib/cart";
+  updateItem,
+  type CartStatus,
+} from "@/lib/cart/store";
+import type {
+  AddItemInput,
+  Cart as CartData,
+  CartItem,
+  CartIssue,
+  ModifierInput,
+  UpdateItemInput,
+} from "@/lib/cart/types";
 
-export type { CartLine, CartLineInput } from "@/lib/cart";
+export type {
+  AddItemInput,
+  CartItem,
+  CartIssue,
+  CartModifier,
+  ModifierInput,
+  UpdateItemInput,
+} from "@/lib/cart/types";
 
-/** Always false on the server, always true once the browser has taken over. */
-const clientSnapshot = () => true;
-const serverSnapshot = () => false;
+/** What a mutation answers with, so a caller can toast the backend's words. */
+export type CartResult = Promise<{ ok: boolean; message: string }>;
 
 export interface Cart {
-  items: CartLine[];
-  /** Plates on the docket, counting quantities. */
+  items: CartItem[];
+  /** Physical items, not lines — what the navbar badge prints. */
   count: number;
-  /** The total before whatever tax and fees a checkout would add. */
   subtotal: number;
+  /** Whatever is blocking the whole docket, in the backend's own words. */
+  issues: CartIssue[];
+  /** False while any line has an issue; checkout waits on it. */
+  isOrderable: boolean;
+
+  status: CartStatus;
   /**
-   * False until the browser has hydrated. Anything that would otherwise flash
-   * the server's empty docket before the stored one arrives — the navbar's
-   * badge, the cart page's empty state — waits on this.
+   * False until the first answer is in. Anything that would otherwise flash an
+   * empty docket before the real one arrives waits on this.
    */
   hydrated: boolean;
-  addItem: typeof addItem;
-  setQuantity: typeof setQuantity;
-  removeItem: typeof removeItem;
-  clear: typeof clear;
+  /** True while a mutation is in flight, so controls can be disabled. */
+  pending: boolean;
+  error: string | null;
+  /** The cart is a signed-in feature; this is how the UI knows to say so. */
+  signedOut: boolean;
+
+  addItem: (input: AddItemInput) => CartResult;
+  updateItem: (itemId: string, input: UpdateItemInput) => CartResult;
+  /** Steps a line's quantity, sending the rest of the line back with it. */
+  setQuantity: (itemId: string, quantity: number) => CartResult;
+  removeItem: (itemId: string) => CartResult;
+  clear: () => CartResult;
+  refresh: () => CartResult;
 }
+
+/**
+ * The options a line was built with, on their way back out.
+ *
+ * A quantity change has to send the whole line — options and quantity price
+ * each other — so the priced modifiers the backend returned are folded back
+ * into the bare input shape it takes.
+ */
+const modifiersOf = (item: CartItem): ModifierInput[] =>
+  (item.modifiers ?? []).map((modifier) => ({
+    groupId: modifier.groupId,
+    optionName: modifier.optionName,
+    quantity: modifier.quantity,
+  }));
 
 /**
  * Read the docket. No provider to mount: the cart is an external store, so
  * every caller subscribes to the same one wherever it sits in the tree.
  */
 export function useCart(): Cart {
-  const items = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const hydrated = useSyncExternalStore(
-    subscribe,
-    clientSnapshot,
-    serverSnapshot,
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const { cart, status, pending, error } = state;
+
+  const setQuantity = useCallback(
+    (itemId: string, quantity: number): CartResult => {
+      // Stepping the last one off a line is how a line is removed.
+      if (quantity < 1) return removeItem(itemId);
+
+      const item = cart.items.find((line) => line._id === itemId);
+      if (!item) return removeItem(itemId);
+
+      return updateItem(itemId, {
+        variantLabel: item.variantLabel ?? null,
+        modifiers: modifiersOf(item),
+        specialInstructions: item.specialInstructions ?? undefined,
+        quantity: Math.floor(quantity),
+      });
+    },
+    [cart],
   );
 
-  return useMemo(() => {
-    let count = 0;
-    let subtotal = 0;
+  return useMemo(
+    (): Cart => ({
+      items: cart.items,
+      count: cart.itemCount,
+      subtotal: cart.subtotal,
+      issues: cart.issues,
+      isOrderable: cart.isOrderable,
 
-    for (const item of items) {
-      count += item.quantity;
-      subtotal += item.unitPrice * item.quantity;
-    }
+      status,
+      hydrated: status !== "idle" && status !== "loading",
+      pending,
+      error,
+      signedOut: status === "signed-out",
 
-    return {
-      items,
-      count,
-      // Cents accumulate a float error over a long docket; the docket is money.
-      subtotal: Math.round(subtotal * 100) / 100,
-      hydrated,
       addItem,
+      updateItem,
       setQuantity,
       removeItem,
-      clear,
-    };
-  }, [items, hydrated]);
+      clear: clearCart,
+      refresh,
+    }),
+    [cart, status, pending, error, setQuantity],
+  );
 }
+
+export type { CartData };

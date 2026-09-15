@@ -2,7 +2,12 @@ import React from "react";
 import { unstable_rethrow } from "next/navigation";
 
 import { getAccount } from "@/lib/auth/account";
-import { ClosingCta, SiteFooter, SiteHeader } from "./_components/home";
+import {
+  ClosingCta,
+  PromoBanner,
+  SiteFooter,
+  SiteHeader,
+} from "./_components/home";
 
 /**
  * The marketing shell.
@@ -51,6 +56,7 @@ export default async function RestaurantLayout({
       {children}
       <ClosingCta />
       <SiteFooter />
+      <PromoBanner />
     </div>
   );
 }

@@ -9,7 +9,6 @@ import {
   Testimonials,
 } from "./_components/home";
 
-
 export const metadata: Metadata = {
   title: "Barkeeper — Every message answered, every order captured",
   description:
@@ -18,19 +17,25 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-
     <main>
       <Hero />
       <ServiceStrip />
       <Promotions />
-      <Categories group="kitchen" heading />
+      <Categories
+        part="first"
+        heading
+        title="The board"
+        blurb="Every heading the kitchen prints, in the order it prints them."
+      />
       <PopularDishes />
       <Testimonials />
-      <Categories group="bar" reverse />
+      <Categories
+        part="second"
+        reverse
+        title="Keep looking"
+        blurb="The rest of the board, from the sides to the sweet end."
+      />
       <Faq />
-
     </main>
-
-
   );
 }

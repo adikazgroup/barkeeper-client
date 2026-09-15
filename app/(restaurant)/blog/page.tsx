@@ -52,12 +52,7 @@ export default async function BlogPage({
         key={`${category}-${search}-${page}`}
         fallback={<BlogSkeleton />}
       >
-        <BlogContent
-          searchTerm={search}
-          category={category}
-          page={page}
-          categories={tree}
-        />
+        <BlogContent searchTerm={search} category={category} page={page} />
       </Suspense>
     </>
   );

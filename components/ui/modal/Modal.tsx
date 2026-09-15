@@ -38,6 +38,8 @@ export interface ModalProps extends Omit<
   variant?: ModalVariant;
   zIndex?: string;
   overlayClassName?: string;
+  /** Overrides the body padding — pass `p-0` for a full-bleed panel. */
+  bodyClassName?: string;
   children?: React.ReactNode;
 }
 
@@ -59,6 +61,7 @@ const Modal = forwardRef(function Modal(
     variant = "default",
     zIndex = "z-[10000]",
     overlayClassName,
+    bodyClassName,
     ...props
   }: ModalProps,
   ref: ForwardedRef<HTMLDivElement>,
@@ -311,7 +314,7 @@ const Modal = forwardRef(function Modal(
           </Button>
         )}
 
-        <div className="sm:p-5 p-3">
+        <div className={cn("sm:p-5 p-3", bodyClassName)}>
           {title && (
             <div className={cn("mb-5", showCloseButton && "pr-12")}>
               <h2

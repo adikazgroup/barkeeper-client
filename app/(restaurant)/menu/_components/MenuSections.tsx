@@ -1,79 +1,19 @@
-import { getData } from "@/lib/api";
-import { getCategoryTree } from "@/lib/categories";
-import type { CategoryNode } from "@/lib/types";
 import { UtensilsCrossed } from "lucide-react";
-import type { FoodItem, MenuGroup } from "../_type";
+
+import { getFullMenu } from "@/lib/foods";
 import { MenuHero } from "./MenuHero";
 import { MenuTabs } from "./MenuTabs";
 
-function groupFoods(foods: FoodItem[], tree: CategoryNode[]): MenuGroup[] {
-  const byCategory = new Map<string, FoodItem[]>();
-
-  for (const food of foods) {
-    const key = food.category?._id;
-    if (!key) continue;
-    const bucket = byCategory.get(key);
-    if (bucket) bucket.push(food);
-    else byCategory.set(key, [food]);
-  }
-
-  const ordered: CategoryNode[] = [...tree];
-  const known = new Set(tree.map((c) => c._id));
-
-  for (const food of foods) {
-    const category = food.category;
-    if (!category || known.has(category._id)) continue;
-    known.add(category._id);
-    ordered.push({ ...category, totalFoods: 0, totalBlogs: 0 });
-  }
-
-  return ordered
-    .map((category) => {
-      const items = byCategory.get(category._id) ?? [];
-      if (items.length === 0) return null;
-
-      return {
-        key: category._id,
-        title: category.name,
-        slug: category.slug,
-        // An unnumbered food sinks to the end rather than jumping the queue.
-        items: [...items].sort(
-          (a, b) =>
-            (a.sortOrder ?? Number.MAX_SAFE_INTEGER) -
-            (b.sortOrder ?? Number.MAX_SAFE_INTEGER),
-        ),
-      } satisfies MenuGroup;
-    })
-    .filter((group): group is MenuGroup => group !== null);
-}
-
-/** As many plates as one request will carry; the board wants the lot. */
-const MENU_PAGE_SIZE = 100;
-
-async function getAllFoods(): Promise<FoodItem[]> {
-  const first = await getData<FoodItem[]>(`/foods?limit=${MENU_PAGE_SIZE}`, {
-    tags: ["foods"],
-  });
-  if (!first) return [];
-
-  const totalPage = first.meta?.totalPage ?? 1;
-  if (totalPage <= 1) return first.data ?? [];
-
-  const rest = await Promise.all(
-    Array.from({ length: totalPage - 1 }, (_, i) =>
-      getData<FoodItem[]>(`/foods?limit=${MENU_PAGE_SIZE}&page=${i + 2}`, {
-        tags: ["foods"],
-      }),
-    ),
-  );
-
-  return [...(first.data ?? []), ...rest.flatMap((res) => res?.data ?? [])];
-}
-
+/**
+ * The board.
+ *
+ * One call does all of it: `/foods/menu` returns the active categories in
+ * print order with their active foods already filed under them, so there is no
+ * category tree to fetch alongside it and no join to write here. Whatever the
+ * admin arranges is what the tabs read.
+ */
 export async function MenuSections() {
-  const [foods, tree] = await Promise.all([getAllFoods(), getCategoryTree()]);
-
-  const groups = groupFoods(foods, tree);
+  const groups = await getFullMenu();
 
   if (groups.length === 0) {
     return (

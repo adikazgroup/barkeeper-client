@@ -53,6 +53,24 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      // Every food, blog and promotion picture is served from the backend's
+      // bucket. Without the host here next/image refuses the URL outright and
+      // the optimizer answers 400.
+      //
+      // Two buckets because two backends are in play: the deployment this app
+      // currently points at, and the one the published API docs describe.
+      {
+        protocol: "https",
+        hostname: "red-chili.s3.ap-southeast-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "duffy-restaurant.s3.us-east-1.amazonaws.com",
+      },
+    ],
+  },
   // Lets phones/other PCs on the same Wi-Fi load the dev server via Next's
   // printed "Network:" URL. Without this, Next 16 silently blocks the dev
   // JS bundle/HMR for any origin but localhost, so the page never

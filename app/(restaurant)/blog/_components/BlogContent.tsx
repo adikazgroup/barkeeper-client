@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { getData } from "@/lib/api";
 import buildQueryParams from "@/lib/buildQueryParams";
-import { categoryFilterFor } from "@/lib/categories";
-import type { CategoryNode } from "@/lib/types";
+import { categoryFilter, getCategoryBySlug } from "@/lib/categories";
 import { BlogPagination } from "./BlogPagination";
 import BlogCard from "./BlogCard";
 import { Leaf } from "lucide-react";
@@ -12,25 +11,27 @@ interface BlogClientProps {
   searchTerm: string;
   category: string;
   page: string | number;
-  categories: CategoryNode[];
 }
 
 export async function BlogContent({
   searchTerm,
   category,
   page,
-  categories,
 }: BlogClientProps) {
   const limit = 9;
   const currentPage = Number(page) || 1;
 
-  // The URL carries a readable slug; the API filters on an ObjectId. Resolving
-  // one to the other is the only reason the tree is threaded down this far.
+  // The URL carries a readable slug; the API filters on an ObjectId. One call
+  // to `/categories/slug/:slug` resolves it — and the `parent` it comes back
+  // with is what says whether this is a category or a sub-category, so the
+  // whole tree no longer has to be threaded down here to find out.
+  const activeCategory = await getCategoryBySlug(category);
+
   const queryParams = buildQueryParams({
     page: currentPage,
     limit,
     searchTerm,
-    ...categoryFilterFor(categories, category),
+    ...categoryFilter(activeCategory),
   });
 
   const data = await getData<BlogListItem[]>(`/blogs?${queryParams}`, {
@@ -38,8 +39,6 @@ export async function BlogContent({
   });
   const blogs = (data?.data ?? []).map(normalizeBlog);
   const totalPost = data?.meta?.total ?? 0;
-
-  const activeCategory = categories.find((c) => c.slug === category);
 
   return (
     <div className="min-h-screen w-full bg-background">

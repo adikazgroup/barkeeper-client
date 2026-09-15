@@ -13,49 +13,43 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
   return res?.data ?? [];
 }
 
-export interface CategoryMatch {
-  category: CategoryNode;
-  /** Set only when the match is a sub-category. */
-  parent?: CategoryNode;
-}
-
 /**
- * Resolve a slug taken off the URL to a category document. Slugs are unique
- * across both layers, so a single pass over the tree is enough.
+ * One category, resolved from a slug off the URL.
  *
- * The URL carries slugs rather than ids because ids are unreadable and would
- * make every shared link opaque — but the API filters on `categoryId`, so the
- * lookup has to happen somewhere, and doing it here keeps it out of the pages.
+ * The endpoint takes either layer: a top-level slug comes back with its
+ * `subCategories`, a sub-category slug without them and with `parent` set to
+ * the id of the category above it — which is enough to tell the two apart
+ * without holding the whole tree.
+ *
+ * The API 404s on an unknown or inactive slug and `getData` turns that into
+ * `null`, so a stale link reads the same as a slug that never existed.
  */
-export function findCategoryBySlug(
-  tree: CategoryNode[],
+export async function getCategoryBySlug(
   slug: string,
-): CategoryMatch | null {
+): Promise<CategoryNode | null> {
   if (!slug) return null;
 
-  for (const parent of tree) {
-    if (parent.slug === slug) return { category: parent };
+  const res = await getData<CategoryNode>(`/categories/slug/${slug}`, {
+    tags: ["categories", `category:${slug}`],
+  });
 
-    const child = parent.subCategories?.find((sub) => sub.slug === slug);
-    if (child) return { category: child, parent };
-  }
-
-  return null;
+  return res?.data ?? null;
 }
 
 /**
- * Turn a slug into the query the blogs/foods endpoints understand. A top-level
- * slug filters on `categoryId`, a sub-category slug on `subCategoryId` — the
- * API has no single "either layer" filter.
+ * Turn a category into the query the blogs/foods endpoints understand.
+ *
+ * `parent` is what decides it: a top-level category filters on `categoryId`, a
+ * sub-category on `subCategoryId` — the API has no single "either layer"
+ * filter.
  */
-export function categoryFilterFor(
-  tree: CategoryNode[],
-  slug: string,
-): { categoryId?: string; subCategoryId?: string } {
-  const match = findCategoryBySlug(tree, slug);
-  if (!match) return {};
+export function categoryFilter(category: CategoryNode | null): {
+  categoryId?: string;
+  subCategoryId?: string;
+} {
+  if (!category) return {};
 
-  return match.parent
-    ? { subCategoryId: match.category._id }
-    : { categoryId: match.category._id };
+  return category.parent
+    ? { subCategoryId: category._id }
+    : { categoryId: category._id };
 }
