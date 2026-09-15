@@ -66,20 +66,20 @@ export function ClosingCta() {
               className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row"
             >
               <Link
-                href="/register"
+                href="/menu"
                 className="group inline-flex h-11 w-full items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 sm:w-auto"
               >
-                Start free trial
+                Order now
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
                   <ChevronRightIcon className="size-4" />
                 </span>
               </Link>
 
               <Link
-                href="mailto:hello@example.com"
+                href="/contact"
                 className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background sm:w-auto"
               >
-                Book a 15-minute demo
+                Talk to us
               </Link>
             </Reveal>
           </div>
