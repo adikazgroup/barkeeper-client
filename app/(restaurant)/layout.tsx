@@ -1,4 +1,5 @@
 import React from "react";
+import { unstable_rethrow } from "next/navigation";
 
 import { getAccount } from "@/lib/auth/account";
 import { ClosingCta, SiteFooter, SiteHeader } from "./_components/home";
@@ -23,6 +24,12 @@ export default async function RestaurantLayout({
   try {
     account = await getAccount();
   } catch (error) {
+    // `auth()` reads the session cookie, which during a static prerender
+    // throws Next's DYNAMIC_SERVER_USAGE signal rather than a real error.
+    // Swallowing it would log a stack trace for every route at build time,
+    // so hand it back to Next — it re-renders the segment dynamically.
+    unstable_rethrow(error);
+
     console.error(
       "Could not read the signed-in account for the header:",
       error,

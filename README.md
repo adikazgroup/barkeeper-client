@@ -61,12 +61,13 @@ A modern, high-performance frontend template built with **Next.js**, **TypeScrip
 
 ## 🔐 Environment Variables
 
-All variables are documented in `.env.example` and validated by `lib/env.ts`.
+All variables are documented in `.env.development` / `.env.production` and
+read through `lib/env.ts`.
 
-| Variable               | Description                                                             |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL`  | Base URL of the backend API this app talks to (no trailing slash).      |
-| `NEXT_PUBLIC_SITE_URL` | Canonical public URL of this site, used for `robots.txt`/`sitemap.xml`. |
+| Variable                  | Description                                                             |
+| ------------------------- | ----------------------------------------------------------------------- |
+| `NEXT_PUBLIC_BACKEND_URL` | Base URL of the backend API this app talks to (no trailing slash).      |
+| `NEXT_PUBLIC_SITE_URL`    | Canonical public URL of this site, used for `robots.txt`/`sitemap.xml`. |
 
 Both are `NEXT_PUBLIC_*`, meaning they're bundled into client-side JS —
 never put secrets behind a `NEXT_PUBLIC_` name. Server-only secrets belong in

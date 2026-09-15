@@ -10,9 +10,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      # Placeholder values so `next build` can validate lib/env.ts and run —
-      # real deployments should set these as repository/environment secrets.
-      NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+      # A placeholder so `next build` can validate lib/env.ts and run — the
+      # backend URL comes from .env.production; real deployments should set
+      # secrets in the repository/environment store.
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4

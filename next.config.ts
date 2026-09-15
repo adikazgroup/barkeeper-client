@@ -4,8 +4,8 @@ import type { NextConfig } from "next";
 // strict validation is relevant, so fall back quietly instead of throwing.
 function apiOrigin(): string | null {
   try {
-    return process.env.NEXT_PUBLIC_API_URL
-      ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+    return process.env.NEXT_PUBLIC_BACKEND_URL
+      ? new URL(process.env.NEXT_PUBLIC_BACKEND_URL).origin
       : null;
   } catch {
     return null;
@@ -14,8 +14,8 @@ function apiOrigin(): string | null {
 
 function apiPort(): string | null {
   try {
-    return process.env.NEXT_PUBLIC_API_URL
-      ? new URL(process.env.NEXT_PUBLIC_API_URL).port || null
+    return process.env.NEXT_PUBLIC_BACKEND_URL
+      ? new URL(process.env.NEXT_PUBLIC_BACKEND_URL).port || null
       : null;
   } catch {
     return null;
