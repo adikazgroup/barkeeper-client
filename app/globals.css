@@ -29,12 +29,6 @@
   --muted: #f1f2e7;
   --muted-foreground: #6b7280;
 
-  /* Form */
-  /* Hairlines carry the hue of the ground they sit on. #e5e7eb is a cool
-     blue-grey, and against the warm #F9FAF0 background it reads as a dirty
-     violet rather than as a quiet edge. These are the same hue as the
-     background (66deg), one clear step down in lightness — the same amount of
-     separation the old pair had against white. */
   --input: #e3e4d8;
   --border: #e3e4d8;
   --ring: #f68622;
