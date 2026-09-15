@@ -110,3 +110,4 @@ Colors are centralized in `app/globals.css` using CSS variables for both light a
 ---
 
 _Built with ❤️ for rapid development._
+!
