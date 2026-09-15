@@ -1,0 +1,562 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Base */
+  --background: #f9faf0;
+  --foreground: #111827;
+
+  /* Surface */
+  --card: #f9faf0;
+  --card-foreground: #111827;
+
+  /* Brand */
+  --primary: #f68622;
+  --primary-foreground: #f9faf0;
+
+  /* Secondary */
+  --secondary: #dcd9d6;
+  --secondary-foreground: #111827;
+
+  /* Accent */
+  --accent: #e5e7eb;
+  --accent-foreground: #111827;
+
+  /* Muted */
+  /* The only remaining light surface token, now that --secondary carries the
+     brand navy. Warmed into the background's hue family so panels sit on the
+     page instead of on top of it. */
+  --muted: #f1f2e7;
+  --muted-foreground: #6b7280;
+
+  /* Form */
+  /* Hairlines carry the hue of the ground they sit on. #e5e7eb is a cool
+     blue-grey, and against the warm #F9FAF0 background it reads as a dirty
+     violet rather than as a quiet edge. These are the same hue as the
+     background (66deg), one clear step down in lightness — the same amount of
+     separation the old pair had against white. */
+  --input: #e3e4d8;
+  --border: #e3e4d8;
+  --ring: #f68622;
+
+  /* The ground colour, named on its own so both themes can derive from it.
+     It is also the light theme's --background, but the dark theme's is a
+     near-black, and anything built from that would no longer be a variant of
+     this. */
+  --cream: #f9faf0;
+
+  /* The travelling border light. */
+  --beam: var(--primary);
+
+  /* Status */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Utility */
+  --reverse: #000000;
+  --hero-sky: #f1f2e8;
+  --hero-cool: #5570d8;
+
+  /* Lattice behind the copy. */
+  --hero-grid: #010d52;
+}
+
+.dark {
+  /* Base */
+  --background: #09090b;
+  --foreground: #fafafa;
+
+  /* Surface */
+  --card: #18181a;
+  --card-foreground: #fafafa;
+
+  /* Brand */
+  /* #010d52 is far too dark to read on the dark background, so the dark
+     theme uses the same hue lifted into a legible tint. */
+  --primary: #f68622;
+  --primary-foreground: #0b1030;
+
+  /* Secondary */
+  --secondary: #18181b;
+  --secondary-foreground: #fafafa;
+
+  /* Accent */
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+
+  /* Muted */
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+
+  /* Form */
+  --input: #27272a;
+  --border: #27272a;
+  --ring: #f68622;
+
+  --beam: var(--primary);
+
+  /* Status */
+  --success: #22c55e;
+  --warning: #c47c00;
+  --danger: #ef4444;
+
+  /* Utility */
+  --reverse: #ffffff;
+
+  /* Deep and slightly blue, so the hero reads as night sky. */
+  --hero-sky: #080a14;
+
+  /* On a dark ground the lifted primary already blooms correctly. */
+  --hero-cool: #7b8df4;
+
+  --hero-grid: #ffffff;
+}
+
+@theme {
+  /* Typography */
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Base */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Surface */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Muted */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Form */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  /* Utility */
+  --color-reverse: var(--reverse);
+  --color-hero-sky: var(--hero-sky);
+  --color-hero-cool: var(--hero-cool);
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  view-transition-name: root;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* View Transitions: top-to-bottom theme reveal */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal 600ms ease-in-out both;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* button click animation */
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.45;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: ripple 600ms linear forwards;
+}
+
+/* Travelling border light
+   ------------------------
+   The rect is inset half a pixel so a 1px stroke lands on the border rather
+   than straddling two rows of pixels.
+
+   Only the dash pattern is computed elsewhere: it has to be a fraction of the
+   perimeter for a single arc to travel the whole edge and close its loop, and
+   the perimeter can only be known by measuring. BeamBorder does that, and sets
+   both the dasharray and --beam-length. */
+.beam rect {
+  x: 0.5px;
+  y: 0.5px;
+  width: calc(100% - 1px);
+  height: calc(100% - 1px);
+  fill: none;
+  stroke: var(--beam);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+  animation: beam-run 4s linear infinite;
+}
+
+/* --beam is deepened in the light theme and lifted in the dark one, so the
+   same opacity would not weigh the same in both. */
+.dark .beam rect {
+  opacity: 0.8;
+}
+
+@keyframes beam-run {
+  to {
+    /* One full circuit. Set on the svg once BeamBorder has measured itself. */
+    stroke-dashoffset: calc(var(--beam-length, 0px) * -1);
+  }
+}
+
+/* The beam is decoration, and a light crawling around a button is exactly the
+   kind of motion that triggers vestibular symptoms. */
+@media (prefers-reduced-motion: reduce) {
+  .beam {
+    display: none;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar,
+.custom-scroll ::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track,
+.custom-scroll ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb,
+.custom-scroll ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover,
+.custom-scroll ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-track,
+.dark .custom-scroll ::-webkit-scrollbar-track {
+  background: #1d1d1d;
+}
+
+.dark ::-webkit-scrollbar-thumb,
+.dark .custom-scroll ::-webkit-scrollbar-thumb {
+  background: #4b4c4d;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+.dark .custom-scroll ::-webkit-scrollbar-thumb:hover {
+  background: #454646;
+}
+
+.dynamicHeight {
+  height: calc(100vh - 3.6rem);
+}
+
+/* Thin themed scrollbar used by dropdown/calendar panels (Select,
+   SearchSelect, MultipleSearchSelect, Calendar). */
+.sideBar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sideBar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sideBar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.sideBar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .sideBar::-webkit-scrollbar-thumb {
+  background: #4b4c4d;
+}
+
+.dark .sideBar::-webkit-scrollbar-thumb:hover {
+  background: #454646;
+}
+
+/* Easy use */
+.ani2 {
+  transition: all 0.2s ease-in-out !important;
+}
+
+.ani3 {
+  transition: all 0.3s ease-in-out !important;
+}
+
+.ani5 {
+  transition: all 0.5s ease-in-out !important;
+}
+
+.ani7 {
+  transition: all 0.7s ease-in-out !important;
+}
+
+/* position */
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* No scrollbar */
+.noBar::-webkit-scrollbar {
+  display: none;
+}
+
+.noBar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Not found page animation */
+.error-404 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2vw, 24px);
+  font-weight: 600;
+  font-size: clamp(100px, 30vw, 380px);
+  letter-spacing: -0.06em;
+  color: rgba(0, 0, 0, 0.5);
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.dark .error-404 {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.error-digit {
+  display: inline-block;
+  position: relative;
+  animation: error-float 6.5s ease-in-out infinite;
+}
+
+.error-digit--two {
+  position: relative;
+}
+
+.error-diamond {
+  position: absolute;
+  top: 55%;
+  left: 55%;
+  width: clamp(14px, 3.5vw, 30px);
+  height: clamp(14px, 3.5vw, 30px);
+  background: currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.error-digit--one {
+  animation-delay: 0s;
+}
+
+.error-digit--two {
+  animation-delay: 0.4s;
+}
+
+.error-digit--three {
+  animation-delay: 0.8s;
+}
+
+@keyframes error-float {
+
+  0%,
+  10% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  20% {
+    transform: translateY(-70px);
+    opacity: 0;
+  }
+
+  35% {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+
+  55% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-digit {
+    animation: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          MARKETING PAGE PRIMITIVES                         */
+/* -------------------------------------------------------------------------- */
+
+/* Infinite logo/channel strip. The track renders its children twice, so
+   translating by -50% lands exactly on the duplicate and loops seamlessly. */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-x var(--marquee-duration, 42s) linear infinite;
+}
+
+/* The same track running the other way, so a second row reads as one board
+   turning rather than two lists running away.
+
+   These are rules rather than Tailwind's `[animation-direction:reverse]` and
+   `hover:[animation-play-state:paused]`: those utilities sit in
+   `@layer utilities`, and the unlayered rule above beats any layer — its
+   `animation` shorthand quietly reset both of them. */
+.animate-marquee-reverse {
+  animation: marquee-x var(--marquee-duration, 42s) linear infinite reverse;
+}
+
+/* For a track whose items are links: a moving target is one nobody can hit. */
+.marquee-pausable:hover,
+.marquee-pausable:focus-within {
+  animation-play-state: paused;
+}
+
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right,
+      transparent,
+      #000 12%,
+      #000 88%,
+      transparent);
+  mask-image: linear-gradient(to right,
+      transparent,
+      #000 12%,
+      #000 88%,
+      transparent);
+}
+
+/* Typing dots in the AI reply bubble. */
+@keyframes typing-dot {
+
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.animate-typing-dot {
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-typing-dot {
+    animation: none;
+  }
+}
+
+/* Fine grain over the hero wash. Generated by feTurbulence rather than
+   shipped as an image, so it costs nothing and never tiles visibly. */
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* Halftone dot field. `currentColor` means a layer takes its ink from the
+   `text-*` colour on its parent, and the two custom properties control the
+   dot radius and the grid pitch — varying those across stacked layers is what
+   produces a halftone ramp rather than a flat screen of dots. */
+.bg-halftone {
+  background-image: radial-gradient(circle at center,
+      currentColor var(--dot-r, 1px),
+      transparent calc(var(--dot-r, 1px) + 0.7px));
+  background-size: var(--dot-gap, 9px) var(--dot-gap, 9px);
+}
