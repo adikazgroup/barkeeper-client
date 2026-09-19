@@ -141,7 +141,7 @@ export function LoginForm() {
           name="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<MailIcon className="size-4.5" />}
+          icon={<MailIcon className="size-4.5 text-foreground" strokeWidth={1.5} />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={errors.email}
@@ -154,7 +154,7 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="Your password"
           revealable
-          icon={<LockIcon className="size-4.5" />}
+          icon={<LockIcon className="size-4.5 text-foreground cursor-pointer" strokeWidth={1.5} />}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={errors.password}

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Info, TriangleAlert } from "lucide-react";
+import { Info, Loader2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,7 +16,7 @@ import {
   XIcon,
 } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
-import { useCart, type CartItem } from "@/hooks/useCart";
+import { useCart, type CartItem, type CartResult } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { AUTH_ROUTES } from "@/lib/auth/constants";
 import { formatMoney } from "@/lib/price";
@@ -74,11 +75,65 @@ export function CartView() {
   const { applied, discount } = useCoupon();
   const total = Math.max(0, subtotal - discount);
 
+  // Which control is working, so the one that was pressed spins rather than
+  // the whole docket going quiet. `pending` from the store says *a* mutation
+  // is in flight, which is what keeps the others disabled; this says which.
+  const [busy, setBusy] = useState<string | null>(null);
+
   if (!hydrated) return <CartSkeleton />;
   // The docket belongs to an account, so there is nothing to show a visitor
   // who has not signed in — and nothing they could send if there were.
   if (signedOut) return <SignedOutCart />;
   if (items.length === 0) return <EmptyCart />;
+
+  /**
+   * Every change to the docket goes through here.
+   *
+   * The cart API answers each mutation with the kitchen's own verdict, and
+   * that answer used to be dropped on the floor — a refused change looked
+   * exactly like one that worked. The toast is keyed on the control, so a
+   * reader leaning on the plus button replaces one message rather than
+   * stacking six.
+   */
+  const run = async (
+    key: string,
+    action: () => CartResult,
+    success: string,
+  ) => {
+    setBusy(key);
+
+    try {
+      const { ok, message } = await action();
+      if (ok) toast.success(success, { id: key });
+      else toast.error(message, { id: key });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleQuantity = (line: CartItem, quantity: number) => {
+    void run(
+      `qty:${line._id}`,
+      () => setQuantity(line._id, quantity),
+      // Stepping the last one off a line is how a line is removed, so the
+      // message has to say what actually happened.
+      quantity < 1
+        ? `${line.name} removed from the docket`
+        : `${line.name} — ${quantity} on the docket`,
+    );
+  };
+
+  const handleRemove = (line: CartItem) => {
+    void run(
+      `remove:${line._id}`,
+      () => removeItem(line._id),
+      `${line.name} removed from the docket`,
+    );
+  };
+
+  const handleClear = () => {
+    void run("clear", clear, "Docket cleared");
+  };
 
   const handleCheckout = () => {
     // A dish can sell out after it was added, so the backend's own verdict is
@@ -118,10 +173,14 @@ export function CartView() {
 
                 <button
                   type="button"
-                  onClick={() => void clear()}
+                  onClick={handleClear}
                   disabled={pending}
-                  className="cursor-pointer font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-busy={busy === "clear"}
+                  className="inline-flex cursor-pointer items-center gap-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  {busy === "clear" && (
+                    <Loader2 aria-hidden className="size-3 animate-spin" />
+                  )}
                   Clear docket
                 </button>
               </Reveal>
@@ -139,8 +198,9 @@ export function CartView() {
                     key={line._id}
                     line={line}
                     pending={pending}
-                    onQuantity={setQuantity}
-                    onRemove={removeItem}
+                    busy={busy}
+                    onQuantity={handleQuantity}
+                    onRemove={handleRemove}
                   />
                 ))}
               </motion.ul>
@@ -265,14 +325,20 @@ export function CartView() {
 function CartRow({
   line,
   pending,
+  busy,
   onQuantity,
   onRemove,
 }: {
   line: CartItem;
   pending: boolean;
-  onQuantity: (itemId: string, quantity: number) => void;
-  onRemove: (itemId: string) => void;
+  /** Which control on the page is working, if any. */
+  busy: string | null;
+  onQuantity: (line: CartItem, quantity: number) => void;
+  onRemove: (line: CartItem) => void;
 }) {
+  const stepping = busy === `qty:${line._id}`;
+  const removing = busy === `remove:${line._id}`;
+
   // The kitchen prices the line, options and all, so the figure is read off
   // the docket rather than multiplied here.
   const blocked = line.isOrderable === false;
@@ -366,12 +432,17 @@ function CartRow({
 
           <button
             type="button"
-            onClick={() => onRemove(line._id)}
+            onClick={() => onRemove(line)}
             disabled={pending}
+            aria-busy={removing}
             aria-label={`Remove ${line.name} from cart`}
             className="shrink-0 cursor-pointer rounded-full border border-transparent p-1.5 text-muted-foreground transition-colors duration-200 hover:border-border hover:bg-card hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <XIcon className="size-4" />
+            {removing ? (
+              <Loader2 aria-hidden className="size-4 animate-spin" />
+            ) : (
+              <XIcon className="size-4" />
+            )}
           </button>
         </div>
 
@@ -379,7 +450,7 @@ function CartRow({
           <div className="inline-flex items-center rounded-full border border-border bg-card/60 backdrop-blur-sm">
             <button
               type="button"
-              onClick={() => onQuantity(line._id, line.quantity - 1)}
+              onClick={() => onQuantity(line, line.quantity - 1)}
               disabled={pending}
               aria-label={
                 line.quantity === 1
@@ -393,14 +464,19 @@ function CartRow({
 
             <span
               aria-live="polite"
-              className="min-w-8 text-center font-mono text-[13px] tabular-nums"
+              aria-busy={stepping}
+              className="grid min-w-8 place-items-center text-center font-mono text-[13px] tabular-nums"
             >
-              {line.quantity}
+              {stepping ? (
+                <Loader2 aria-hidden className="size-3.5 animate-spin" />
+              ) : (
+                line.quantity
+              )}
             </span>
 
             <button
               type="button"
-              onClick={() => onQuantity(line._id, line.quantity + 1)}
+              onClick={() => onQuantity(line, line.quantity + 1)}
               disabled={pending}
               aria-label={`Increase quantity of ${line.name}`}
               className="cursor-pointer rounded-r-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"

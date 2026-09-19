@@ -31,14 +31,17 @@ export default function AuthLayout({
       <AuthBackdrop />
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col border-x border-border/50">
-        <div className="flex items-center justify-between gap-4 border-b border-border/50 px-5 py-3.5 sm:px-8">
-          <Logo href="/" className="h-6 w-auto" priority />
+        <div className="flex items-center justify-between gap-4 border-b border-border/50 px-5 py-3 sm:px-8">
+          <Logo href="/" className="h-10 w-auto" priority />
           <div className="flex items-center gap-2">
+            {/* Given the same ground, height and radius as the theme toggle
+                beside it, so the two read as one pair of controls rather than
+                a loose line of text next to a button. */}
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground transition-colors duration-200 hover:text-foreground"
+              className="group inline-flex h-8 items-center gap-1.5 rounded-lg border border-border hover:border-primary/50 bg-transparent px-3 text-[13px] text-foreground transition-all duration-200  hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <ArrowLeftIcon className="size-3.5" />
+              <ArrowLeftIcon className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
               Back to site
             </Link>
 

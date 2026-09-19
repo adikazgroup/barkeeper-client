@@ -270,9 +270,9 @@ function Where() {
                 {COMPANY.legalName}
               </p>
               <p className="mt-3 text-[14px] leading-[1.8] text-muted-foreground">
-                {COMPANY.address.line}
+                {COMPANY.address.street}
                 <br />
-                {COMPANY.address.country}
+                {COMPANY.address.locality}
               </p>
 
               <a

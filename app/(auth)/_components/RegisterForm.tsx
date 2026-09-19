@@ -118,7 +118,7 @@ export function RegisterForm() {
           name="name"
           autoComplete="name"
           placeholder="Jane Cooper"
-          icon={<UserIcon className="size-4.5" />}
+          icon={<UserIcon className="size-4.5" strokeWidth={1.5} />}
           value={name}
           onChange={(event) => setName(event.target.value)}
           error={errors.name}
@@ -131,7 +131,7 @@ export function RegisterForm() {
           name="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<MailIcon className="size-4.5" />}
+          icon={<MailIcon className="size-4.5" strokeWidth={1.5} />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={errors.email}
@@ -148,7 +148,7 @@ export function RegisterForm() {
               autoComplete="new-password"
               placeholder="6+ characters"
               revealable
-              icon={<LockIcon className="size-4.5" />}
+              icon={<LockIcon className="size-4.5" strokeWidth={1.5} />}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               error={errors.password}
@@ -161,7 +161,7 @@ export function RegisterForm() {
               autoComplete="new-password"
               placeholder="Repeat it"
               revealable
-              icon={<LockIcon className="size-4.5" />}
+              icon={<LockIcon className="size-4.5" strokeWidth={1.5} />}
               value={confirm}
               onChange={(event) => setConfirm(event.target.value)}
               error={errors.confirm}

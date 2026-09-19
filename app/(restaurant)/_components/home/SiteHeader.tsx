@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,7 @@ import { ShoppingBagIcon, UserIcon } from "@/components/icons/Icons";
 import { ThemeToggle } from "@/components/ui";
 import { useCart } from "@/hooks/useCart";
 import { EASE } from "./Reveal";
-import { Logo } from "./Logo";
+import Logo from "@/components/shared/Logo";
 
 const NAV_LINKS = [
   // Root-relative, so the nav still works from /about, /contact and the
@@ -20,6 +21,23 @@ const NAV_LINKS = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
+
+/**
+ * Which nav entry the current URL belongs to, or null when the customer is on
+ * a page the bar does not list (the cart, a policy page).
+ *
+ * "/" has to match exactly — every path starts with it, so a prefix test would
+ * light Home up everywhere. The rest claim their subtree, so /menu/pizza still
+ * reads as Menu.
+ */
+function activeHref(pathname: string): string | null {
+  const match = NAV_LINKS.find(({ href }) =>
+    href === "/"
+      ? pathname === "/"
+      : pathname === href || pathname.startsWith(`${href}/`),
+  );
+  return match?.href ?? null;
+}
 
 /** Where the bar sends a customer who has a docket, and one who has an account. */
 const CART_HREF = "/cart";
@@ -49,6 +67,12 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
   const [scrolled, setScrolled] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // The pill rests on the page the customer is on and lends itself to whatever
+  // they point at, returning when they let go. One value drives both, so the
+  // hand-off is the same spring either way.
+  const current = activeHref(usePathname());
+  const lit = hovered ?? current;
+
   const navRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef(new Map<string, HTMLAnchorElement>());
 
@@ -65,15 +89,15 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
   }, []);
 
   useEffect(() => {
-    measure(hovered);
-  }, [hovered, measure]);
+    measure(lit);
+  }, [lit, measure]);
 
   useEffect(() => {
-    if (!hovered) return;
-    const onResize = () => measure(hovered);
+    if (!lit) return;
+    const onResize = () => measure(lit);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [hovered, measure]);
+  }, [lit, measure]);
 
   // Bare at the top of the page, so the hero reads edge to edge; the moment the
   // page moves, the bar earns a ground. The threshold is a few pixels rather
@@ -103,7 +127,10 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
         scrolled ? "bg-background/30" : "bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+      {/* The same ruled frame every section below is drawn in, so the two
+          uprights run the full height of the page instead of starting under
+          the bar. The auth screens already frame their header this way. */}
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between border-x border-border/50 px-5 sm:px-8">
         {/* <Link
           href="/"
           className="shrink-0 rounded-full text-[19px] font-semibold tracking-[-0.02em] text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -111,7 +138,7 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
           Barkeeper&apos;s
         </Link> */}
 
-        <Logo className="h-10 w-auto shrink-0" priority />
+        <Logo className="h-10 w-auto shrink-0" priority href="/" />
 
         <nav
           ref={navRef}
@@ -126,7 +153,7 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
               animate={{
                 x: pill.x,
                 width: pill.width,
-                opacity: hovered ? 1 : 0,
+                opacity: lit ? 1 : 0,
               }}
               transition={{
                 x: { type: "spring", stiffness: 420, damping: 38, mass: 0.7 },
@@ -136,14 +163,14 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
                   damping: 38,
                   mass: 0.7,
                 },
-                opacity: { duration: hovered ? 0.15 : 0.22, ease: EASE },
+                opacity: { duration: lit ? 0.15 : 0.22, ease: EASE },
               }}
               style={{ translateZ: 0 }}
             />
           )}
 
           {NAV_LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               ref={(node) => {
@@ -152,17 +179,18 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
               }}
               onMouseEnter={() => setHovered(link.href)}
               onFocus={() => setHovered(link.href)}
+              aria-current={current === link.href ? "page" : undefined}
               className={cn(
                 "relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-medium whitespace-nowrap",
                 "transition-colors duration-200 ease-out",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                hovered === link.href
+                lit === link.href
                   ? "text-primary-foreground"
                   : "text-foreground",
               )}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -273,13 +301,19 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
             <ul className="rounded-2xl border border-border bg-card/75 px-4 py-3 shadow-[0_16px_40px_-20px_rgb(1_13_82/0.35)] backdrop-blur-xl">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
-                  <a
+                  <Link
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className="block border-b border-border/60 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    aria-current={current === link.href ? "page" : undefined}
+                    className={cn(
+                      "block border-b border-border/60 py-3 text-sm transition-colors",
+                      current === link.href
+                        ? "font-medium text-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
               <li>

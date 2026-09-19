@@ -22,19 +22,12 @@ export default function Home() {
       <ServiceStrip />
       <Promotions />
       <Categories
-        part="first"
         heading
-        title="The board"
+        title="The Category"
         blurb="Every heading the kitchen prints, in the order it prints them."
       />
       <PopularDishes />
       <Testimonials />
-      <Categories
-        part="second"
-        reverse
-        title="Keep looking"
-        blurb="The rest of the board, from the sides to the sweet end."
-      />
       <Faq />
     </main>
   );

@@ -15,14 +15,7 @@ interface AuthFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   action?: ReactNode;
 }
 
-/**
- * The one input the auth screens use.
- *
- * The house Input component is built for the admin-ish forms elsewhere; these
- * screens want the lighter field the marketing pages use — a translucent card
- * over the backdrop, the brand orange on focus, and the label sharing its row
- * with a link.
- */
+
 export function AuthField({
   label,
   error,
@@ -54,7 +47,7 @@ export function AuthField({
 
       <div className="relative">
         {icon && (
-          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted-foreground/70">
+          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted-foreground z-10">
             {icon}
           </span>
         )}
@@ -82,7 +75,7 @@ export function AuthField({
             type="button"
             onClick={() => setRevealed((shown) => !shown)}
             aria-label={revealed ? "Hide password" : "Show password"}
-            className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+            className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none z-10 cursor-pointer"
           >
             {revealed ? (
               <EyeOffIcon className="size-4" />

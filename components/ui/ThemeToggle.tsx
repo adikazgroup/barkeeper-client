@@ -47,7 +47,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       onClick={cycleTheme}
       className={cn(
         "relative size-8 rounded-[11px] flex items-center justify-center cursor-pointer",
-        "bg-secondary hover:bg-primary/25",
+        "bg-secondary hover:bg-transparent",
         "border border-border hover:border-muted-foreground/40",
         "transition-all duration-200",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",

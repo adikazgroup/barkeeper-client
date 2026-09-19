@@ -146,7 +146,7 @@ export function ResetPasswordForm() {
           name="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<MailIcon className="size-4.5" />}
+          icon={<MailIcon className="size-4.5" strokeWidth={1.5} />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={errors.email}
@@ -173,7 +173,7 @@ export function ResetPasswordForm() {
             autoComplete="new-password"
             placeholder="At least 6 characters"
             revealable
-            icon={<LockIcon className="size-4.5" />}
+            icon={<LockIcon className="size-4.5" strokeWidth={1.5} />}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             error={errors.password}
@@ -188,7 +188,7 @@ export function ResetPasswordForm() {
           autoComplete="new-password"
           placeholder="Type it once more"
           revealable
-          icon={<LockIcon className="size-4.5" />}
+          icon={<LockIcon className="size-4.5" strokeWidth={1.5} />}
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
           error={errors.confirm}

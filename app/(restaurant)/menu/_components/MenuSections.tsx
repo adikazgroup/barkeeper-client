@@ -4,14 +4,7 @@ import { getFullMenu } from "@/lib/foods";
 import { MenuHero } from "./MenuHero";
 import { MenuTabs } from "./MenuTabs";
 
-/**
- * The board.
- *
- * One call does all of it: `/foods/menu` returns the active categories in
- * print order with their active foods already filed under them, so there is no
- * category tree to fetch alongside it and no join to write here. Whatever the
- * admin arranges is what the tabs read.
- */
+
 export async function MenuSections() {
   const groups = await getFullMenu();
 

@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,10 +21,10 @@ import {
   ShoppingBagIcon,
 } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
+import { staggerChild } from "@/app/(restaurant)/_components/home/Reveal";
 import { useCart } from "@/hooks/useCart";
 import { payableOf } from "@/lib/price";
 import { cn } from "@/lib/utils";
-import foodPlaceholder from "@/public/food/RedChili_DoubleSmashBurger2.png";
 import { Price } from "./price";
 import { FoodItem, FoodVariant } from "../_type";
 
@@ -44,20 +45,8 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
 
   const { addItem, pending } = useCart();
 
-  // A plate with exactly one priced size has no choice to offer, so it adds
-  // like a single-price plate — but it is still that size that goes on the
-  // docket, since the plate itself carries no figure.
   const soleVariant = variants.length === 1 ? variants[0] : null;
 
-  /**
-   * Put a plate on the docket.
-   *
-   * Only the dish and its tier travel: the kitchen prices the line, so nothing
-   * here sends a figure it read off the card. It can also refuse — a required
-   * option group unanswered, a tier sold out, a dish outside its serving
-   * window — and when it does, its own words are what the customer sees,
-   * because only the backend knows which of those it was.
-   */
   const addToCart = async (variant?: FoodVariant) => {
     setOpen(false);
 
@@ -72,8 +61,6 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
     else toast.error(message);
   };
 
-  // Multi-size plates are ordered from the size panel, so they are addable as
-  // long as any size is priced at all.
   const addable =
     priced ||
     payableOf(
@@ -84,9 +71,12 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
   const tags = (item.tags ?? []).slice(0, MAX_TAGS);
 
   return (
-    <li
+    // The variants are inert on their own — they only play when a parent
+    // orchestrates them, which the board does each time the counter changes.
+    <motion.li
+      variants={staggerChild}
       className={cn(
-        "group flex h-full list-none flex-col rounded-2xl border border-border/60 bg-card p-2",
+        "group flex h-full list-none flex-col rounded-2xl border border-border/60 bg-card/30 p-2",
         "transition-[border-color,box-shadow] duration-300 ease-out",
         "hover:border-primary/30 hover:shadow-[0_28px_60px_-40px_rgba(0,0,0,0.5)]",
       )}
@@ -95,10 +85,10 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
           plate rather than showing more of it. */}
       <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
         <SafeImage
-          src={item.image?.url || foodPlaceholder}
+          src={item.image?.url}
           alt={item.name}
           fill
-          fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-muted-foreground"
           className="ani5 object-cover group-hover:scale-[1.04]"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
@@ -262,6 +252,6 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
           )}
         </div>
       </div>
-    </li>
+    </motion.li>
   );
 };

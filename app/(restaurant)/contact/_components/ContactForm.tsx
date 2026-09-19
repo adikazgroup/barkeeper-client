@@ -3,13 +3,14 @@
 /**
  * The message form.
  *
- * Drawn as one card in the home page's language, and the fields are left to
- * the shared `Input` and `Textarea` — those already speak in the semantic
- * tokens, so the page needs no overrides of its own.
+ * No card of its own any more: the page rules this column off from the ways in
+ * beside it, and a bordered box inside a ruled column is a frame within a
+ * frame. The fields are left to the shared `Input` and `Textarea` — those
+ * already speak in the semantic tokens, so the page needs no overrides.
  */
 
 import { useState } from "react";
-import { Info, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input/Input";
@@ -61,10 +62,10 @@ export function ContactForm() {
   return (
     <div
       id="message"
-      className="h-full scroll-mt-24 rounded-lg border border-border/60 bg-card p-6 sm:p-9"
+      className="h-full scroll-mt-24 rounded-2xl border border-border/60 bg-card/30 p-6 sm:p-9"
     >
       <div className="mb-8">
-        <h2 className="text-[26px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[30px]">
+        <h2 className="text-[26px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[34px]">
           Send word
         </h2>
         <p className="mt-3 max-w-[46ch] text-[14px] leading-[1.7] text-muted-foreground">
@@ -82,6 +83,7 @@ export function ContactForm() {
             label="Your name"
             onChange={handleChange}
             value={formData.name}
+            className="bg-transparent"
           />
           <Input
             type="email"
@@ -91,6 +93,7 @@ export function ContactForm() {
             label="Email address"
             onChange={handleChange}
             value={formData.email}
+            className="bg-transparent"
           />
         </div>
 
@@ -102,6 +105,7 @@ export function ContactForm() {
           label="Phone number"
           onChange={handleChange}
           value={formData.phone}
+          className="bg-transparent"
         />
 
         <Textarea
@@ -112,15 +116,12 @@ export function ContactForm() {
           rows={6}
           onChange={handleChange}
           value={formData.message}
+          className="bg-transparent"
         />
 
-        <div className="flex flex-col-reverse items-start justify-between gap-5 border-t border-border/50 pt-6 sm:flex-row sm:items-center">
-          <p className="flex items-start gap-2.5 text-[12.5px] leading-[1.7] text-muted-foreground">
-            <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-            For a table tonight, ring us — the phone is quicker than the post.
-          </p>
-
-
+        {/* The note that stood here now heads the column beside this one, so
+            the row closes on the button alone. */}
+        <div className="flex flex-col items-start gap-5 pt-2 sm:flex-row sm:items-center">
           <button
             type="submit"
             disabled={loading}
@@ -132,6 +133,10 @@ export function ContactForm() {
               <Send aria-hidden className="size-4" />
             </span>
           </button>
+
+          <p className="text-[12.5px] leading-[1.7] text-muted-foreground">
+            We usually reply the same day.
+          </p>
         </div>
       </form>
     </div>

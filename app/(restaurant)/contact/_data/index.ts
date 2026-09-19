@@ -1,9 +1,16 @@
 import { Calendar, Mail, MapPin, Phone } from "lucide-react";
 
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+} from "@/components/icons/BrandIcons";
 import { COMPANY } from "@/lib/dummyData";
 
 /** Shared by the hero and the contact cards, so the pin only lives once. */
-export const MAP_URL = "https://share.google/PVNHE8SL1vMwH3Lc1";
+export const MAP_URL =
+  "https://www.google.com/maps/search/?api=1&query=1901+C+Street+SE+Suite+B+Washington+DC+20003";
 
 /** The number as it is dialled — spaces stripped, so `tel:` links work. */
 export const TEL = `tel:${COMPANY.phone.replace(/\s/g, "")}`;
@@ -53,4 +60,18 @@ export const cards = [
     link: "#hours",
     linkLabel: "See the week",
   },
+];
+
+/**
+ * The channels the counter also answers on.
+ *
+ * The same four the footer lists, and pointed at the same placeholder — there
+ * is one place to put the real handles when the kitchen has them, and it is
+ * not here.
+ */
+export const socials = [
+  { Icon: WhatsAppIcon, label: "WhatsApp", href: "#" },
+  { Icon: FacebookIcon, label: "Facebook", href: "#" },
+  { Icon: InstagramIcon, label: "Instagram", href: "#" },
+  { Icon: TelegramIcon, label: "Telegram", href: "#" },
 ];

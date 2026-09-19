@@ -1,8 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Info } from "lucide-react";
 
+import { EASE } from "@/app/(restaurant)/_components/home/Reveal";
 import { cn } from "@/lib/utils";
 import type { MenuGroup } from "../_type";
 import { MenuHero } from "./MenuHero";
@@ -11,29 +14,51 @@ import { FoodCard } from "./FoodCard";
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
-  const [activeKey, setActiveKey] = useState(groups[0].key);
+/**
+ * How a counter arrives when it is switched to.
+ *
+ * Tighter than the home page's stagger: a board can hold a dozen plates, and
+ * at the marketing pace the last one would still be landing a second after the
+ * tap. Short enough to read as one movement, long enough to see.
+ */
+const PLATES: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.035, delayChildren: 0.08 } },
+};
 
-  // A category can disappear between renders — a food pulled from the board
-  // empties its section — so fall back to the first counter rather than
-  // rendering nothing.
+export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
+  // Which counter the board opens at, named by its slug so the link that sent
+  // them here reads as what it does. An unknown or missing slug opens the
+  // first counter, which is what the board does on its own anyway.
+  const requested = useSearchParams().get("category");
+
+  const [activeKey, setActiveKey] = useState(
+    () =>
+      groups.find((group) => group.slug === requested)?.key ?? groups[0].key,
+  );
+
+  // Tapping a second card on the home board changes the query without
+  // remounting this component, so the counter follows the URL when it moves
+  // rather than only when it is first read.
+  useEffect(() => {
+    if (!requested) return;
+    const match = groups.find((group) => group.slug === requested);
+    if (match) setActiveKey(match.key);
+  }, [requested, groups]);
+
   const active = groups.find((group) => group.key === activeKey) ?? groups[0];
   const panelId = `${active.slug}-panel`;
 
   const railRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  // The moving pill is measured off the live buttons rather than guessed at,
-  // because the counters' names decide their widths. `null` until the first
-  // measurement, so nothing paints in the wrong place.
   const [pill, setPill] = useState<{ left: number; width: number } | null>(
     null,
   );
   const [overflowing, setOverflowing] = useState(false);
 
-  // A layout effect, not an effect: the measurement lands before the browser
-  // paints, so the pill starts where it belongs instead of sliding in from the
-  // rail's left edge on first render.
+  const reduced = useReducedMotion();
+
   useLayoutEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
@@ -54,8 +79,6 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
     return () => observer.disconnect();
   }, [active.key]);
 
-  // Once the rail is long enough to scroll, a counter picked from its far end
-  // should come to the middle rather than sit half off-screen.
   useLayoutEffect(() => {
     const rail = railRef.current;
     const el = tabRefs.current.get(active.key);
@@ -70,10 +93,6 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
   return (
     <>
       <MenuHero>
-        {/* The counters, as a rail. Only the active one's plates are below it,
-          so the reader picks a counter instead of scrolling the whole board.
-          The rail is only as wide as its counters, so it sits centred on the
-          page until there are enough of them to fill the line. */}
         {groups.length > 1 && (
           <div className="relative mx-auto w-fit max-w-full">
             <div
@@ -127,9 +146,6 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
               })}
             </div>
 
-            {/* The rail scrolls, and a counter clipped mid-word looks like a bug
-              rather than an invitation. The fade says there is more — and only
-              when there is. */}
             {overflowing && (
               <span
                 aria-hidden
@@ -162,17 +178,36 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
                   CELL,
                 )}
               >
-                <h2 className="text-[26px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[32px]">
+                <motion.h2
+                  initial={reduced ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                  className="text-[26px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[32px]"
+                >
                   {active.title}
-                </h2>
-                <span className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase tabular-nums">
+                </motion.h2>
+
+                {/* A beat behind the name, so the pair reads left to right
+                    rather than as one block appearing at once. */}
+                <motion.span
+                  initial={reduced ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.07, ease: EASE }}
+                  className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase tabular-nums"
+                >
                   {active.items.length}{" "}
                   {active.items.length === 1 ? "plate" : "plates"}
-                </span>
+                </motion.span>
               </div>
 
-              <ul
+              {/* Under reduced motion `initial={false}` stops the children
+                  ever entering their hidden state, so nothing moves and the
+                  card itself needs no gating of its own. */}
+              <motion.ul
                 role="list"
+                variants={PLATES}
+                initial={reduced ? false : "hidden"}
+                animate="visible"
                 className={cn(
                   "grid gap-4 py-10 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3",
                   CELL,
@@ -181,7 +216,7 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
                 {active.items.map((item) => (
                   <FoodCard key={item._id} item={item} />
                 ))}
-              </ul>
+              </motion.ul>
             </div>
 
             <p

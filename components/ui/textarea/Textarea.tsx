@@ -192,7 +192,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     // Visual Variants
     // -----------------------------
     const variantClasses = {
-      default: "bg-background ring-1 ring-border",
+      default: "bg-transparent ring-1 ring-border",
 
       filled: "bg-muted ring-1 ring-transparent",
 

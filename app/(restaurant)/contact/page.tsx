@@ -21,32 +21,33 @@ export default function ContactPage() {
     <>
       <ContactHero />
 
-      <section
-        aria-labelledby="reach-heading"
-      >
+      <section aria-labelledby="reach-heading">
         <div className="mx-auto max-w-7xl">
           <div className="border-x border-border/50">
             <h2 id="reach-heading" className="sr-only">
               Ways to reach us
             </h2>
 
-            <Reveal
-              className={cn(
-                "grid gap-5 py-12 lg:grid-cols-12 lg:gap-6 sm:px-8 px-5 ",
-                CELL,
-              )}
-            >
-              <div className="lg:col-span-5">
+            {/* One rule down the middle rather than two boxes side by side:
+                the ways in and the form are one conversation, and the frame
+                the page already draws is the only frame either needs. */}
+            <Reveal className="grid lg:grid-cols-12">
+              <div
+                className={cn(
+                  "border-b border-border/50 py-12 lg:col-span-4 lg:border-b-0 lg:border-r",
+                  CELL,
+                )}
+              >
                 <ContactCards />
               </div>
-              <div className="lg:col-span-7">
+
+              <div className={cn("py-12 lg:col-span-8", CELL)}>
                 <ContactForm />
               </div>
             </Reveal>
           </div>
         </div>
       </section>
-
 
       <Faq />
     </>

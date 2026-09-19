@@ -76,7 +76,7 @@ export function ForgotPasswordForm() {
           name="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<MailIcon className="size-4.5" />}
+          icon={<MailIcon className="size-4.5" strokeWidth={1.5} />}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={error}

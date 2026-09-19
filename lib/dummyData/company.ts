@@ -15,10 +15,12 @@ export const COMPANY = {
   /** Shown on the contact page and dialled from it, so it lives here too. */
   phone: "+880 1700 000000",
   address: {
-    line: "Gazipur, Dhaka",
-    country: "Bangladesh",
+    /** Street and suite — the first line of a postal address. */
+    street: "1901 C Street SE, Suite B",
+    /** City, state and ZIP — the second line. */
+    locality: "Washington, DC 20003",
     /** One-line form for signatures and footers. */
-    full: "Gazipur, Dhaka, Bangladesh",
+    full: "1901 C Street SE, Suite B, Washington, DC 20003",
   },
 } as const;
 

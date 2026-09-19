@@ -162,9 +162,9 @@ export function ContactSection({ subject }: { subject: string }) {
               {COMPANY.legalName}
             </p>
             <p className="mt-2 text-[13.5px] leading-[1.8] text-muted-foreground">
-              {COMPANY.address.line}
+              {COMPANY.address.street}
               <br />
-              {COMPANY.address.country}
+              {COMPANY.address.locality}
             </p>
           </div>
 
