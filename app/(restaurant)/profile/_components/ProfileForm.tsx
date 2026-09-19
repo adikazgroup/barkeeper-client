@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import {
@@ -9,9 +11,16 @@ import {
   CheckIcon,
   ChevronRightIcon,
   MailIcon,
+  TrashIcon,
   UserIcon,
 } from "@/components/icons/Icons";
 import { Leaf, MapPin, Phone } from "lucide-react";
+import { AuthApiError, updateMe, type ProfileUpdate } from "@/lib/auth/api";
+import {
+  AVATAR_ACCEPT,
+  AVATAR_MAX_BYTES,
+  AVATAR_TYPES,
+} from "@/lib/auth/constants";
 import { cn } from "@/lib/utils";
 import { demoUser, dietaryOptions } from "../_data";
 import { SectionCard } from "./SectionCard";
@@ -62,10 +71,10 @@ export interface Account {
 }
 
 /**
- * The name, email and phone come from the account; the address and preferences
- * are still demo data, because the backend has no endpoint for them yet.
- * Keeping them apart is what lets "Discard changes" stay honest — it returns to
- * what the account says, not to a stranger's details.
+ * The name, email, phone and photo come from the account; the address and
+ * preferences are still demo data, because the backend has no endpoint for
+ * them yet. Keeping them apart is what lets "Discard changes" stay honest — it
+ * returns to what the account says, not to a stranger's details.
  *
  * The backend stores one `name`, so the first word is taken as the first name
  * and whatever follows as the last.
@@ -84,13 +93,38 @@ function accountState(account: Account): FormState {
   };
 }
 
+/**
+ * What the customer has done to the photo since the page loaded. Three states
+ * rather than a nullable file, because "left alone" and "cleared" have to
+ * reach `PATCH /users/me` as different things: one sends nothing at all, the
+ * other sends `removeProfilePicture`.
+ */
+type PictureEdit =
+  | { kind: "unchanged" }
+  | { kind: "replaced"; file: File; previewUrl: string }
+  | { kind: "removed" };
+
 export function ProfileForm({ account }: { account: Account }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+
   // Resolved on the server and passed in, so the fields are right in the first
   // paint rather than filling in a beat later.
   const accountDefaults = useMemo(() => accountState(account), [account]);
 
   const [form, setForm] = useState<FormState>(accountDefaults);
+  const [picture, setPicture] = useState<PictureEdit>({ kind: "unchanged" });
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | undefined>();
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  // An object URL is a handle on a blob the browser holds until it is revoked,
+  // so every preview that is replaced or dropped releases its own.
+  useEffect(() => {
+    if (picture.kind !== "replaced") return;
+    const url = picture.previewUrl;
+    return () => URL.revokeObjectURL(url);
+  }, [picture]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -103,20 +137,120 @@ export function ProfileForm({ account }: { account: Account }) {
         : [...current.dietary, option],
     }));
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  /** Back to what the account says — fields, photo and all. */
+  const discard = () => {
+    setForm(accountDefaults);
+    setPicture({ kind: "unchanged" });
+    setNameError(undefined);
+    if (fileInput.current) fileInput.current.value = "";
+  };
+
+  const pickFile = (file: File | undefined) => {
+    if (!file) return;
+
+    if (!(AVATAR_TYPES as readonly string[]).includes(file.type)) {
+      toast.error("Photos have to be a JPG, PNG or WebP.");
+      return;
+    }
+
+    if (file.size > AVATAR_MAX_BYTES) {
+      toast.error("That photo is over 2 MB. Try a smaller one.");
+      return;
+    }
+
+    setPicture({
+      kind: "replaced",
+      file,
+      previewUrl: URL.createObjectURL(file),
+    });
+  };
+
+  const removePhoto = () => {
+    setPicture({ kind: "removed" });
+    // Without this the same file picked again fires no `change` event, and the
+    // photo could not be put back the way it was.
+    if (fileInput.current) fileInput.current.value = "";
+  };
+
+  /** What the avatar frame is showing right now, whatever its source. */
+  const shownAvatar =
+    picture.kind === "replaced"
+      ? picture.previewUrl
+      : picture.kind === "removed"
+        ? null
+        : account.avatarUrl;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const name = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+
+    if (!name) {
+      setNameError("Tell us what to put on the docket.");
+      return;
+    }
+
+    setNameError(undefined);
+
+    if (!session?.accessToken) {
+      toast.error("Your session has expired. Please sign in again.");
+      return;
+    }
+
+    const phone = form.phone.trim();
+
+    // Only what the endpoint actually stores. The address, birthday and
+    // preferences below have nowhere to go yet, and an `email` in the payload
+    // is a 400 — which is why that field is read-only.
+    const payload: ProfileUpdate = {
+      name,
+      // `null`, not an empty string: that is the only way to clear a number.
+      phone: phone || null,
+    };
+
+    if (picture.kind === "replaced") {
+      payload.profilePicture = {
+        title: form.firstName.trim() || name,
+        alt: name,
+      };
+    } else if (picture.kind === "removed") {
+      payload.removeProfilePicture = true;
+    }
+    // `unchanged` sends neither, which is what leaves the stored photo alone.
+
     setSaving(true);
 
-    // Nothing to save to yet. The pause is only so the button reads as a
-    // button; swap this for the real call when accounts land.
-    window.setTimeout(() => {
-      setSaving(false);
+    try {
+      await updateMe(
+        payload,
+        session.accessToken,
+        picture.kind === "replaced" ? picture.file : null,
+      );
+
+      // The photo is on the account now, so the local preview has done its job
+      // and the frame goes back to reading whatever the server hands down.
+      setPicture({ kind: "unchanged" });
+      if (fileInput.current) fileInput.current.value = "";
+
+      // The band at the top of the layout paints the same name and photo from
+      // its own `/users/me` read, so the whole route is re-rendered rather than
+      // just this form — otherwise the header would still show the old one.
+      router.refresh();
+
       toast.success("Your details are up to date.", { icon: "🍀" });
-    }, 700);
+    } catch (error) {
+      toast.error(
+        error instanceof AuthApiError
+          ? error.message
+          : "Could not save your details. Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} noValidate>
       {/* ─── Who you are ─── */}
       <SectionCard
         title="Your details"
@@ -129,34 +263,64 @@ export function ProfileForm({ account }: { account: Account }) {
               with the app, so the initial stands in rather than a stock face. */}
           <div className="size-20 shrink-0 rounded-2xl border border-border/60 bg-card p-1.5">
             <div className="relative grid size-full place-items-center overflow-hidden rounded-xl bg-muted text-[20px] font-medium">
-              {account.avatarUrl || demoUser.avatar ? (
+              {shownAvatar ? (
                 <Image
-                  src={account.avatarUrl || demoUser.avatar!}
+                  src={shownAvatar}
                   alt=""
                   fill
                   sizes="80px"
-                  unoptimized={Boolean(account.avatarUrl)}
+                  // The bucket host and a local `blob:` preview are both past
+                  // what the optimizer will take, so neither goes through it.
+                  unoptimized
                   className="object-cover"
                 />
               ) : (
-                account.name.trim().charAt(0).toUpperCase()
+                (form.firstName || account.name).trim().charAt(0).toUpperCase()
               )}
             </div>
           </div>
 
           <div>
-            <button
-              type="button"
-              onClick={() =>
-                toast("Photo uploads land with accounts.", { icon: "📷" })
-              }
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <CameraIcon className="size-4" />
-              Change photo
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInput}
+                type="file"
+                accept={AVATAR_ACCEPT}
+                onChange={(event) => pickFile(event.target.files?.[0])}
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                disabled={saving}
+                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CameraIcon className="size-4" />
+                {shownAvatar ? "Change photo" : "Add photo"}
+              </button>
+
+              {shownAvatar && (
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  disabled={saving}
+                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium text-muted-foreground backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <TrashIcon className="size-4" />
+                  Remove
+                </button>
+              )}
+            </div>
+
             <p className="mt-2.5 text-[12px] text-muted-foreground">
-              JPG or PNG, up to 2 MB.
+              {picture.kind === "replaced"
+                ? "Ready to go — save to put it on your account."
+                : picture.kind === "removed"
+                  ? "Save to take the photo off your account."
+                  : "JPG, PNG or WebP, up to 2 MB."}
             </p>
           </div>
         </div>
@@ -168,6 +332,8 @@ export function ProfileForm({ account }: { account: Account }) {
             onChange={(value) => set("firstName", value)}
             icon={<UserIcon className="size-4.5" />}
             autoComplete="given-name"
+            error={nameError}
+            disabled={saving}
             required
           />
           <Field
@@ -175,7 +341,7 @@ export function ProfileForm({ account }: { account: Account }) {
             value={form.lastName}
             onChange={(value) => set("lastName", value)}
             autoComplete="family-name"
-            required
+            disabled={saving}
           />
           <Field
             label="Email"
@@ -184,7 +350,10 @@ export function ProfileForm({ account }: { account: Account }) {
             onChange={(value) => set("email", value)}
             icon={<MailIcon className="size-4.5" />}
             autoComplete="email"
-            required
+            // The address is what the account is keyed on, and the endpoint
+            // refuses one in the payload outright. Shown, not edited.
+            readOnly
+            hint="Your sign-in address. Contact us if it needs to change."
             badge={<VerifiedBadge verified={account.isEmailVerified} />}
           />
           <Field
@@ -196,6 +365,7 @@ export function ProfileForm({ account }: { account: Account }) {
             autoComplete="tel"
             placeholder="+353 …"
             hint="Needed at checkout, so the driver can reach you."
+            disabled={saving}
             badge={
               form.phone ? (
                 <VerifiedBadge verified={account.isPhoneVerified} />
@@ -208,6 +378,7 @@ export function ProfileForm({ account }: { account: Account }) {
             value={form.dateOfBirth}
             onChange={(value) => set("dateOfBirth", value)}
             hint="We send a plate on the house for the day."
+            disabled={saving}
           />
         </div>
       </SectionCard>
@@ -336,8 +507,9 @@ export function ProfileForm({ account }: { account: Account }) {
       <div className="sticky bottom-0 z-20 flex flex-col-reverse items-stretch gap-3 border-b border-border/50 bg-background/85 px-5 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-end sm:px-8">
         <button
           type="button"
-          onClick={() => setForm(accountDefaults)}
-          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          onClick={discard}
+          disabled={saving}
+          className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           Discard changes
         </button>
@@ -370,6 +542,7 @@ function Field({
   icon,
   hint,
   badge,
+  error,
   ...props
 }: {
   label: string;
@@ -380,6 +553,8 @@ function Field({
   hint?: string;
   /** Sits beside the label — the verified / not-verified state. */
   badge?: React.ReactNode;
+  /** Replaces the hint when this field is what the save tripped over. */
+  error?: string;
 } & Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "value" | "onChange" | "type"
@@ -413,17 +588,25 @@ function Field({
           type={type}
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          aria-invalid={Boolean(error) || undefined}
           className={cn(
-            "h-11 w-full rounded-lg border border-border bg-card/60 px-3.5 text-[14px] backdrop-blur-sm transition-colors",
+            "h-11 w-full rounded-lg border bg-card/60 px-3.5 text-[14px] backdrop-blur-sm transition-colors",
             "placeholder:text-muted-foreground/70",
             "focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+            "read-only:text-muted-foreground read-only:focus:border-border read-only:focus:ring-0",
+            error ? "border-danger/60" : "border-border",
             icon && "pl-10.5",
           )}
           {...props}
         />
       </div>
 
-      {hint && <p className="text-[12px] text-muted-foreground">{hint}</p>}
+      {error ? (
+        <p className="text-[12px] text-danger">{error}</p>
+      ) : (
+        hint && <p className="text-[12px] text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }
@@ -488,9 +671,7 @@ function Toggle({
         <span
           className={cn(
             "size-4.5 rounded-full transition-transform duration-200",
-            checked
-              ? "translate-x-5 bg-background"
-              : "bg-muted-foreground/40",
+            checked ? "translate-x-5 bg-background" : "bg-muted-foreground/40",
           )}
         />
       </span>

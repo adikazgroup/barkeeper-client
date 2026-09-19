@@ -22,6 +22,20 @@ function apiPort(): string | null {
   }
 }
 
+/**
+ * Where every picture the backend serves lives. Two buckets because two
+ * backends are in play: the deployment this app currently points at, and the
+ * one the published API docs describe.
+ *
+ * Read twice below — `remotePatterns` is what next/image will optimize, and
+ * the CSP's `img-src` is what the browser will load at all.
+ */
+const MEDIA_HOSTS = [
+  "red-chili.s3.ap-southeast-1.amazonaws.com",
+  "duffy-restaurant.s3.us-east-1.amazonaws.com",
+  "duffy-media.s3.amazonaws.com",
+] as const;
+
 // script-src/style-src need 'unsafe-inline': the theme-flash script in
 // app/layout.tsx and the dynamic inline `style={{ top, left, width }}`
 // positioning used throughout components/ui/ (Select, dropdowns, Calendar)
@@ -38,7 +52,11 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // The bucket hosts belong here as well as in `remotePatterns`: an avatar is
+  // rendered `unoptimized`, so the browser fetches it straight from the bucket
+  // rather than through /_next/image, and the CSP judges it on its own origin.
+  // `blob:` covers the preview of a photo picked but not saved yet.
+  `img-src 'self' data: blob: ${MEDIA_HOSTS.map((host) => `https://${host}`).join(" ")}`,
   "font-src 'self' data:",
   // In dev, also allow the API's port on *any* host: lib/axios.ts swaps
   // "localhost" for the page's own hostname when opened from another
@@ -54,22 +72,13 @@ const csp = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
-    remotePatterns: [
-      // Every food, blog and promotion picture is served from the backend's
-      // bucket. Without the host here next/image refuses the URL outright and
-      // the optimizer answers 400.
-      //
-      // Two buckets because two backends are in play: the deployment this app
-      // currently points at, and the one the published API docs describe.
-      {
-        protocol: "https",
-        hostname: "red-chili.s3.ap-southeast-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "duffy-restaurant.s3.us-east-1.amazonaws.com",
-      },
-    ],
+    // Every food, blog, promotion and avatar picture is served from the
+    // backend's bucket. Without the host here next/image refuses the URL
+    // outright and the optimizer answers 400.
+    remotePatterns: MEDIA_HOSTS.map((hostname) => ({
+      protocol: "https" as const,
+      hostname,
+    })),
   },
   // Lets phones/other PCs on the same Wi-Fi load the dev server via Next's
   // printed "Network:" URL. Without this, Next 16 silently blocks the dev

@@ -24,8 +24,18 @@ export const SESSION_COOKIES = [
 /** Clears a stale session cookie before sending the customer back to sign-in. */
 export const SESSION_ENDED_ROUTE = "/api/account/session-ended";
 
-/** Every path under these prefixes needs a signed-in customer. */
-export const PROTECTED_PREFIXES = ["/profile"] as const;
+/**
+ * Every path under these prefixes needs a signed-in customer.
+ *
+ * Checkout and the two pages Stripe returns to are on the list for the same
+ * reason the account is: all three read or change one person's order, and none
+ * of them has anything to draw without the session that owns it.
+ */
+export const PROTECTED_PREFIXES = [
+  "/profile",
+  "/checkout",
+  "/payment",
+] as const;
 
 /** Where a customer lands once they are signed in. */
 export const AFTER_LOGIN_ROUTE = "/profile";
@@ -57,3 +67,13 @@ export const OTP_TTL_MINUTES = 15;
 
 /** Cool-off before the "Resend" affordance comes back, in seconds. */
 export const RESEND_COOLDOWN_SECONDS = 60;
+
+/**
+ * What the avatar field will take. The backend has its own limits; these are
+ * here so a file that was never going to be accepted is caught in the browser
+ * rather than after a round trip.
+ */
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+/** The `accept` attribute, kept in step with `AVATAR_TYPES`. */
+export const AVATAR_ACCEPT = AVATAR_TYPES.join(",");

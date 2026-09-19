@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import {
 } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
 import { useCart, type CartItem } from "@/hooks/useCart";
+import { useCoupon } from "@/hooks/useCoupon";
 import { AUTH_ROUTES } from "@/lib/auth/constants";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ import {
   staggerChild,
   staggerParent,
 } from "../../_components/home/Reveal";
+import { CouponField } from "./CouponField";
 
 /** The board the reader came from, and where an empty cart sends them back. */
 const MENU_HREF = "/menu";
@@ -49,6 +52,8 @@ const CELL = "px-5 sm:px-8";
  * costs once its options are on it.
  */
 export function CartView() {
+  const router = useRouter();
+
   const {
     items,
     count,
@@ -62,6 +67,12 @@ export function CartView() {
     removeItem,
     clear,
   } = useCart();
+
+  // The code is quoted against the docket by the kitchen, never worked out
+  // here, and it is re-quoted whenever a line changes — so this figure always
+  // belongs to the subtotal printed beside it.
+  const { applied, discount } = useCoupon();
+  const total = Math.max(0, subtotal - discount);
 
   if (!hydrated) return <CartSkeleton />;
   // The docket belongs to an account, so there is nothing to show a visitor
@@ -80,12 +91,9 @@ export function CartView() {
       return;
     }
 
-    // Nothing takes payment yet. Saying so is better than a button that looks
-    // like it worked.
-    toast(
-      "Online checkout is on the way — ring the counter to place this order.",
-      { icon: "🍀" },
-    );
+    // Checkout prices the docket properly — tax, tip and the pickup time are
+    // all decided there, which is why this page stops at the subtotal.
+    router.push("/checkout");
   };
 
   return (
@@ -169,6 +177,20 @@ export function CartView() {
                     </dd>
                   </div>
 
+                  {applied && discount > 0 && (
+                    <div className="flex items-baseline justify-between gap-4">
+                      <dt className="min-w-0 truncate text-muted-foreground">
+                        Discount
+                        <span className="ml-1.5 font-mono text-[11px] tracking-widest text-primary uppercase">
+                          {applied.code}
+                        </span>
+                      </dt>
+                      <dd className="font-mono tabular-nums text-primary">
+                        &minus;{formatMoney(discount)}
+                      </dd>
+                    </div>
+                  )}
+
                   <div className="flex items-baseline justify-between gap-4">
                     <dt className="text-muted-foreground">Tax &amp; fees</dt>
                     <dd className="text-[12px] text-muted-foreground">
@@ -179,10 +201,12 @@ export function CartView() {
                   <div className="flex items-baseline justify-between gap-4 border-t border-border/50 pt-4">
                     <dt className="font-medium">Total</dt>
                     <dd className="font-mono text-[22px] tracking-[-0.02em] tabular-nums text-primary">
-                      {formatMoney(subtotal)}
+                      {formatMoney(total)}
                     </dd>
                   </div>
                 </dl>
+
+                <CouponField />
 
                 {/* Whatever is blocking the whole docket, in the backend's own
                     words — it is the only side that knows which of a dozen

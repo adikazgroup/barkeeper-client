@@ -32,6 +32,10 @@ const NOTICES: Record<string, { tone: "error" | "success"; message: string }> = 
     tone: "success",
     message: "Email verified — sign in to finish setting up.",
   },
+  "account-deleted": {
+    tone: "success",
+    message: "Your account is closed. Sign up any time.",
+  },
   "password-reset": {
     tone: "success",
     message: "Password updated. Sign in with your new one.",

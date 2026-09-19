@@ -34,7 +34,7 @@ export class AuthApiError extends Error {
 interface RequestOptions {
   /** Bearer token for the `[User]` endpoints. */
   token?: string;
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
 }
 
 export async function authFetch<T>(
@@ -42,16 +42,27 @@ export async function authFetch<T>(
   body?: unknown,
   { token, method }: RequestOptions = {},
 ): Promise<ApiEnvelope<T>> {
+  const isMultipart =
+    typeof FormData !== "undefined" && body instanceof FormData;
+
   let response: Response;
 
   try {
     response = await fetch(`${BACKEND_URL}${path}`, {
       method: method ?? (body === undefined ? "GET" : "POST"),
       headers: {
-        "Content-Type": "application/json",
+        // A multipart body carries its own `Content-Type`, with the boundary
+        // the browser picked. Setting one here overwrites it, and the backend
+        // is then handed parts it cannot split.
+        ...(isMultipart ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isMultipart
+            ? (body as FormData)
+            : JSON.stringify(body),
       // The refresh token is set as an httpOnly cookie, so the jar has to
       // travel with every call that might rotate or clear it.
       credentials: "include",
@@ -178,4 +189,59 @@ export function changePassword(
 
 export function getMe(token: string) {
   return authFetch<AccountUser>("/users/me", undefined, { token });
+}
+
+/* ─── The signed-in customer's own record ─── */
+
+/**
+ * Everything `PATCH /users/me` will take. Each field is optional and only what
+ * is sent is touched, which is what keeps a name-only edit from clearing the
+ * phone number or detaching the picture.
+ *
+ * `phone: null` is the one way to clear a number — an empty string is a value,
+ * not an absence. `email`, `status` and `password` are rejected with a 400, so
+ * they have no place in this shape at all.
+ */
+export interface ProfileUpdate {
+  name?: string;
+  /** `null` clears the stored number. */
+  phone?: string | null;
+  /** Caption and alt text for the picture, uploaded or already stored. */
+  profilePicture?: { title?: string; alt?: string };
+  /** Drops the current picture without putting one in its place. */
+  removeProfilePicture?: true;
+}
+
+/**
+ * Updates the signed-in customer's own record.
+ *
+ * Always posted as multipart, whether or not there is a file: the endpoint
+ * takes the fields as a JSON string under `data` either way, so one shape here
+ * covers both a name edit and an avatar upload.
+ *
+ * Sending neither `file` nor `removeProfilePicture` leaves the stored picture
+ * where it is — a name-only save never detaches it.
+ */
+export function updateMe(
+  input: ProfileUpdate,
+  token: string,
+  file?: File | null,
+) {
+  const form = new FormData();
+  form.append("data", JSON.stringify(input));
+  if (file) form.append("profilePicture", file);
+
+  return authFetch<AccountUser>("/users/me", form, { token, method: "PATCH" });
+}
+
+/**
+ * Closes the signed-in customer's own account, answering with the record as it
+ * stood. The token dies with it, so nothing signed-in can be called afterwards
+ * — the caller's next move is to clear the local session.
+ */
+export function deleteMe(token: string) {
+  return authFetch<AccountUser>("/users/me", undefined, {
+    token,
+    method: "DELETE",
+  });
 }

@@ -1,123 +1,145 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Clock, Loader2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   ChevronDownIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
-  SearchIcon,
-  ShoppingBagIcon,
 } from "@/components/icons/Icons";
-import { Bike, Clock, MapPin, Receipt } from "lucide-react";
 import SafeImage from "@/components/ui/SafeImage";
-import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/price";
+import { adoptCart } from "@/lib/cart/store";
+import type { ApiMeta } from "@/lib/api";
 import {
-  demoOrders,
-  formatDateTime,
-  orderProgress,
-  orderStatusMeta,
-  type Order,
-  type OrderStatus,
-} from "../_data";
+  cancelMyOrder,
+  fetchMyOrders,
+  reorder as reorderApi,
+  retryMyPayment,
+} from "@/lib/orders/client";
+import { formatDateTime, pickupLabel, statusMeta } from "@/lib/orders/format";
+import { isCancellable, type Order } from "@/lib/orders/types";
+import { formatMoney } from "@/lib/price";
+import { cn } from "@/lib/utils";
+
+import { OrderReview } from "./OrderReview";
 
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-/** The filters, and which statuses each one lets through. */
-const filters: { id: string; label: string; statuses: OrderStatus[] | null }[] =
-  [
-    { id: "all", label: "All", statuses: null },
-    { id: "live", label: "Live", statuses: ["preparing", "on-the-way"] },
-    { id: "delivered", label: "Completed", statuses: ["delivered"] },
-    { id: "cancelled", label: "Cancelled", statuses: ["cancelled"] },
-  ];
+/** Rows per page. The backend's own default, said out loud. */
+const PAGE_SIZE = 10;
+
+/**
+ * The filters.
+ *
+ * The values are the backend's statuses verbatim, because they are sent to it
+ * as `?status=` — a label of our own here would only have to be translated back
+ * on the way out, and would drift the first time the kitchen adds a state.
+ */
+const FILTERS: { id: string; label: string; status?: string }[] = [
+  { id: "all", label: "All" },
+  { id: "pending", label: "Unpaid", status: "pending" },
+  { id: "confirmed", label: "Confirmed", status: "confirmed" },
+  { id: "preparing", label: "In the kitchen", status: "preparing" },
+  { id: "ready", label: "Ready", status: "ready" },
+  { id: "completed", label: "Collected", status: "completed" },
+  { id: "cancelled", label: "Cancelled", status: "cancelled" },
+];
 
 /**
  * Every docket on the account.
  *
  * Drawn as rows of the page's frame rather than a stack of floating cards: the
- * three figures up top are the home page's service strip, the filters are the
- * board's counter rail, and a docket opens in place instead of moving the
- * reader to another screen.
+ * filters are the board's counter rail and a docket opens in place instead of
+ * moving the reader to another screen — though there is a screen of its own for
+ * one that is still being cooked, because that one wants watching.
+ *
+ * The filter and the page are the backend's to apply, not this component's:
+ * `/orders/my` answers one page at a time, so filtering in here would only
+ * search the ten rows that happened to be on screen.
  */
 export function OrdersView() {
   const [filter, setFilter] = useState("all");
-  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [meta, setMeta] = useState<ApiMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const visible = useMemo(() => {
-    const allowed = filters.find((entry) => entry.id === filter)?.statuses;
-    const needle = query.trim().toLowerCase();
+  /**
+   * Bumped to ask the same page again after a failure.
+   *
+   * The read is driven by what the reader chose — the filter, the page — so a
+   * retry is another turn of the same handle rather than a second code path
+   * that could answer differently.
+   */
+  const [attempt, setAttempt] = useState(0);
 
-    return demoOrders.filter((order) => {
-      if (allowed && !allowed.includes(order.status)) return false;
-      if (!needle) return true;
+  useEffect(() => {
+    let cancelled = false;
 
-      // Searching the order number and the plates covers both ways a customer
-      // goes looking: "what was that reference" and "when did I last get wings".
-      return (
-        order.id.toLowerCase().includes(needle) ||
-        order.branch.toLowerCase().includes(needle) ||
-        order.items.some((item) => item.name.toLowerCase().includes(needle))
-      );
-    });
-  }, [filter, query]);
+    void (async () => {
+      const status = FILTERS.find((entry) => entry.id === filter)?.status;
+      const answer = await fetchMyOrders({ page, limit: PAGE_SIZE, status });
 
-  const counts = useMemo(() => {
-    const spent = demoOrders
-      .filter((order) => order.status !== "cancelled")
-      .reduce((total, order) => total + order.total, 0);
+      if (cancelled) return;
 
-    return {
-      total: demoOrders.length,
-      live: demoOrders.filter((order) =>
-        ["preparing", "on-the-way"].includes(order.status),
-      ).length,
-      spent,
+      setLoading(false);
+
+      if (!answer.ok || !answer.data) {
+        setError(answer.message || "Your orders could not be read.");
+        setOrders([]);
+        return;
+      }
+
+      setError(null);
+      setOrders(answer.data.orders);
+      setMeta(answer.data.meta);
+    })();
+
+    return () => {
+      cancelled = true;
     };
-  }, []);
+  }, [filter, page, attempt]);
+
+  /** Every way of asking again: put the skeleton up, then turn the handle. */
+  const reload = () => {
+    setLoading(true);
+    setAttempt((current) => current + 1);
+  };
+
+  /** One row changed under us — swap it rather than re-reading the page. */
+  const replace = (updated: Order) =>
+    setOrders((current) =>
+      current.map((order) => (order._id === updated._id ? updated : order)),
+    );
+
+  const totalPages = meta?.totalPage ?? 1;
 
   return (
     <div>
-      {/* The three figures, as a ruled strip — the same shape the home page
-          answers its four questions in. */}
-      <ul
-        className={cn(
-          "grid grid-cols-2 border-b border-border/50 bg-card/20 sm:grid-cols-3",
-          CELL,
-        )}
-      >
-        <StatCell label="Orders placed" value={String(counts.total)} />
-        <StatCell label="Still live" value={String(counts.live)} accent ruled />
-        <StatCell
-          label="Spent with us"
-          value={formatMoney(counts.spent)}
-          className="col-span-2 border-t border-border/50 pt-5 sm:col-span-1 sm:border-t-0 sm:pt-0"
-          ruledFrom="sm"
-        />
-      </ul>
-
-      {/* Filter rail and search, on one line once there's room for both. */}
-      <div
-        className={cn(
-          "flex flex-col gap-3 border-b border-border/50 py-5 sm:flex-row sm:items-center sm:justify-between",
-          CELL,
-        )}
-      >
+      {/* Filter rail. Changing it always starts at page one — page three of
+          "all" is rarely page three of "cancelled". */}
+      <div className={cn("border-b border-border/50 py-5", CELL)}>
         <div
           role="tablist"
           aria-label="Filter orders by status"
           className="scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
         >
-          {filters.map((entry) => (
+          {FILTERS.map((entry) => (
             <button
               key={entry.id}
               type="button"
               role="tab"
               aria-selected={filter === entry.id}
-              onClick={() => setFilter(entry.id)}
+              onClick={() => {
+                setLoading(true);
+                setFilter(entry.id);
+                setPage(1);
+              }}
               className={cn(
                 "shrink-0 cursor-pointer rounded-full px-4 py-2 text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 filter === entry.id
@@ -129,87 +151,179 @@ export function OrdersView() {
             </button>
           ))}
         </div>
-
-        <div className="relative sm:w-64">
-          <SearchIcon
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground/70"
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search orders"
-            aria-label="Search orders"
-            className="h-11 w-full rounded-full border border-border bg-card/60 pr-4 pl-10 text-[13.5px] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
-          />
-        </div>
       </div>
 
-      {visible.length === 0 ? (
-        <EmptyOrders cleared={Boolean(query) || filter !== "all"} />
+      {loading ? (
+        <OrdersSkeleton />
+      ) : error ? (
+        <Blank
+          title="Your orders could not be read"
+          body={error}
+          action={
+            <button
+              type="button"
+              onClick={reload}
+              className="mt-8 inline-flex h-11 cursor-pointer items-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Try again
+            </button>
+          }
+        />
+      ) : orders.length === 0 ? (
+        <Blank
+          title={filter === "all" ? "No orders yet" : "Nothing under that"}
+          body={
+            filter === "all"
+              ? "Pick a counter on the board and your first docket will show up here."
+              : "No order on the account is at that stage right now."
+          }
+          action={
+            filter === "all" ? (
+              <Link
+                href="/menu"
+                className="group mt-8 inline-flex h-11 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Browse the board
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
+                  <ChevronRightIcon className="size-4" />
+                </span>
+              </Link>
+            ) : null
+          }
+        />
       ) : (
-        <ul role="list" className="divide-y divide-border/50">
-          {visible.map((order) => (
-            <OrderRow key={order.id} order={order} />
-          ))}
-        </ul>
+        <>
+          <ul role="list" className="divide-y divide-border/50">
+            {orders.map((order) => (
+              <OrderRow key={order._id} order={order} onChange={replace} />
+            ))}
+          </ul>
+
+          {totalPages > 1 && (
+            <div
+              className={cn(
+                "flex items-center justify-between gap-4 border-t border-border/50 py-5",
+                CELL,
+              )}
+            >
+              <Pager
+                onClick={() => {
+                  setLoading(true);
+                  setPage((current) => Math.max(1, current - 1));
+                }}
+                disabled={page <= 1}
+              >
+                <ChevronLeftIcon className="size-3.5" />
+                Newer
+              </Pager>
+
+              <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
+                Page {page} of {totalPages}
+              </p>
+
+              <Pager
+                onClick={() => {
+                  setLoading(true);
+                  setPage((current) => Math.min(totalPages, current + 1));
+                }}
+                disabled={page >= totalPages}
+              >
+                Older
+                <ChevronRightIcon className="size-3.5" />
+              </Pager>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-/**
- * One figure of the strip. The rules are drawn per cell rather than with
- * `divide-x`: at two columns the rule belongs between the pair, and `divide-x`
- * would also draw one down the left of every second row.
- */
-function StatCell({
-  label,
-  value,
-  accent,
-  ruled,
-  ruledFrom,
-  className,
+function OrderRow({
+  order,
+  onChange,
 }: {
-  label: string;
-  value: string;
-  accent?: boolean;
-  /** Draws the rule at every width. */
-  ruled?: boolean;
-  /** Draws it only from that breakpoint up. */
-  ruledFrom?: "sm";
-  className?: string;
+  order: Order;
+  onChange: (order: Order) => void;
 }) {
-  return (
-    <li
-      className={cn(
-        "py-5",
-        ruled && "border-l border-border/50 pl-5",
-        ruledFrom === "sm" && "sm:border-l sm:border-border/50 sm:pl-5",
-        className,
-      )}
-    >
-      <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-2 font-mono text-[24px] tracking-[-0.02em] tabular-nums",
-          accent && "text-primary",
-        )}
-      >
-        {value}
-      </p>
-    </li>
-  );
-}
-
-function OrderRow({ order }: { order: Order }) {
   const [open, setOpen] = useState(false);
-  const status = orderStatusMeta[order.status];
+  const [busy, setBusy] = useState(false);
+
+  const meta = statusMeta(order.status);
   const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const live = order.status === "preparing" || order.status === "on-the-way";
+  const unpaid =
+    order.status === "pending" && order.payment?.status !== "paid";
+
+  const handleReorder = async () => {
+    setBusy(true);
+
+    const answer = await reorderApi(order._id);
+
+    setBusy(false);
+
+    if (!answer.ok || !answer.data) {
+      toast.error(answer.message || "Those plates could not be added.");
+      return;
+    }
+
+    // The answer carries the whole priced cart, so the store takes it as it is
+    // rather than asking `/carts` for what is already in hand.
+    adoptCart(answer.data.cart);
+
+    const { added, skipped } = answer.data;
+
+    if (skipped.length > 0) {
+      // Naming what did not come with matters more than the count that did:
+      // a customer who is not told finds out at the counter.
+      toast(
+        `${added} back on the docket. Not available: ${skipped
+          .map((line) => line.name)
+          .join(", ")}.`,
+        { icon: "🍀" },
+      );
+    } else {
+      toast.success(answer.message || `${added} back on the docket.`);
+    }
+  };
+
+  const handlePay = async () => {
+    setBusy(true);
+
+    const answer = await retryMyPayment(order._id);
+
+    if (!answer.ok || !answer.data) {
+      setBusy(false);
+      toast.error(answer.message || "Payment could not be restarted.");
+      return;
+    }
+
+    const { order: fresh, checkout } = answer.data;
+
+    if (!checkout?.checkoutUrl) {
+      setBusy(false);
+      onChange(fresh);
+      toast.success(answer.message || "This one is already paid.");
+      return;
+    }
+
+    window.location.href = checkout.checkoutUrl;
+  };
+
+  const handleCancel = async () => {
+    setBusy(true);
+
+    const answer = await cancelMyOrder(order._id, "Changed my mind");
+
+    setBusy(false);
+
+    if (!answer.ok || !answer.data) {
+      toast.error(answer.message || "The order could not be cancelled.");
+      return;
+    }
+
+    onChange(answer.data);
+    toast.success(answer.message || "Order cancelled.");
+  };
 
   return (
     <li>
@@ -218,50 +332,42 @@ function OrderRow({ order }: { order: Order }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <h3 className="font-mono text-[14px] tracking-[0.04em] tabular-nums">
-                {order.id}
+                {order.orderNumber || order._id.slice(-8).toUpperCase()}
               </h3>
 
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-inset",
-                  status.className,
+                  meta.className,
                 )}
               >
                 <span
                   aria-hidden
                   className={cn(
                     "size-1.5 rounded-full",
-                    status.dot,
-                    live && "animate-pulse",
+                    meta.dot,
+                    meta.live && "animate-pulse",
                   )}
                 />
-                {status.label}
+                {meta.label}
               </span>
             </div>
 
             <p className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="size-3.5" />
-                {formatDateTime(order.placedAt)}
+                {formatDateTime(order.createdAt)}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                {order.type === "Delivery" ? (
-                  <Bike className="size-3.5" />
-                ) : (
-                  <ShoppingBagIcon className="size-3.5" />
-                )}
-                {order.type}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="size-3.5" />
-                {order.branch}
+                <Receipt className="size-3.5" />
+                {pickupLabel(order)}
               </span>
             </p>
           </div>
 
           <div className="text-right">
             <p className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
-              {formatMoney(order.total)}
+              {formatMoney(order.pricing.total)}
             </p>
             <p className="mt-1 text-[12px] text-muted-foreground">
               {itemCount} {itemCount === 1 ? "plate" : "plates"}
@@ -269,20 +375,17 @@ function OrderRow({ order }: { order: Order }) {
           </div>
         </div>
 
-        {/* Where the order is, for the ones still moving. */}
-        {live && <ProgressRail status={order.status} eta={order.eta} />}
-
         {/* The plates, as a row of thumbnails until the docket is opened. */}
         <div className="mt-5 flex items-center gap-2">
           {order.items.slice(0, 4).map((item, index) => (
             <div
-              key={`${order.id}-${item.name}-${index}`}
+              key={`${order._id}-thumb-${index}`}
               className="size-12 shrink-0 rounded-xl border border-border/60 bg-card p-1"
             >
               <div className="relative size-full overflow-hidden rounded-lg bg-muted">
                 <SafeImage
-                  src={item.image}
-                  alt={item.name}
+                  src={item.image?.url}
+                  alt={item.image?.alt || item.name}
                   fill
                   sizes="48px"
                   fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
@@ -291,6 +394,12 @@ function OrderRow({ order }: { order: Order }) {
               </div>
             </div>
           ))}
+
+          {order.items.length > 4 && (
+            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+              +{order.items.length - 4}
+            </span>
+          )}
 
           <button
             type="button"
@@ -314,14 +423,14 @@ function OrderRow({ order }: { order: Order }) {
           <ul role="list" className="divide-y divide-border/50">
             {order.items.map((item, index) => (
               <li
-                key={`${order.id}-line-${index}`}
+                key={`${order._id}-line-${index}`}
                 className="flex items-center gap-4 py-3.5 first:pt-0 last:pb-0"
               >
                 <div className="size-12 shrink-0 rounded-xl border border-border/60 bg-card p-1">
                   <div className="relative size-full overflow-hidden rounded-lg bg-muted">
                     <SafeImage
-                      src={item.image}
-                      alt={item.name}
+                      src={item.image?.url}
+                      alt={item.image?.alt || item.name}
                       fill
                       sizes="48px"
                       fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
@@ -335,63 +444,69 @@ function OrderRow({ order }: { order: Order }) {
                     {item.name}
                   </p>
                   <p className="mt-1 truncate font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-                    {item.variant} · ×{item.quantity}
+                    {item.variantLabel ?? "Regular"} · ×{item.quantity}
                   </p>
                 </div>
 
                 <span className="shrink-0 font-mono text-[13.5px] tabular-nums">
-                  {formatMoney(item.price * item.quantity)}
+                  {formatMoney(item.lineTotal)}
                 </span>
               </li>
             ))}
           </ul>
 
-          <dl className="mt-5 space-y-2.5 border-t border-border/50 pt-5 text-[13.5px]">
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Subtotal</dt>
-              <dd className="font-mono tabular-nums">
-                {formatMoney(order.subtotal)}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">
-                {order.type === "Delivery" ? "Delivery" : "Collection"}
-              </dt>
-              <dd className="font-mono tabular-nums">
-                {order.delivery > 0 ? formatMoney(order.delivery) : "Free"}
-              </dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-4 border-t border-border/50 pt-3">
-              <dt className="font-medium">Total</dt>
-              <dd className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
-                {formatMoney(order.total)}
-              </dd>
-            </div>
-          </dl>
+          <PricingList order={order} />
+
+          {/* A review is only possible once the order has been collected, and
+              the block reads its own state — so it is mounted on exactly the
+              orders that can have one, and only while the row is open. */}
+          {order.status === "completed" && (
+            <OrderReview orderId={order._id} />
+          )}
 
           <div className="mt-6 flex flex-wrap gap-3">
+            {unpaid && (
+              <button
+                type="button"
+                onClick={() => void handlePay()}
+                disabled={busy}
+                className="group inline-flex h-11 cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busy ? "One moment…" : "Pay for this order"}
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
+                  <ChevronRightIcon className="size-4" />
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() =>
-                toast("Re-ordering arrives with accounts — the board is live.", {
-                  icon: "🍀",
-                })
-              }
-              className="group inline-flex h-11 cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              onClick={() => void handleReorder()}
+              disabled={busy}
+              className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
+              {busy && <Loader2 aria-hidden className="size-4 animate-spin" />}
               Order this again
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
-                <ChevronRightIcon className="size-4" />
-              </span>
             </button>
 
             <Link
-              href="/profile/transactions"
+              href={`/profile/orders/${order._id}`}
               className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Receipt className="size-4" />
-              View payment
+              Track it
             </Link>
+
+            {isCancellable(order) && (
+              <button
+                type="button"
+                onClick={() => void handleCancel()}
+                disabled={busy}
+                className="inline-flex h-11 cursor-pointer items-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -399,51 +514,98 @@ function OrderRow({ order }: { order: Order }) {
   );
 }
 
-/** Three stops between the kitchen and the door. */
-function ProgressRail({ status, eta }: { status: OrderStatus; eta?: string }) {
-  const labels: Record<string, string> = {
-    preparing: "In the kitchen",
-    "on-the-way": "On the way",
-    delivered: "Delivered",
-  };
-  const reached = orderProgress.indexOf(status);
+/**
+ * What it came to, as the kitchen priced it.
+ *
+ * Tax and tip are printed only when there were any: a zero tip row on an order
+ * nobody tipped is noise, and the customer knows what they chose.
+ */
+export function PricingList({ order }: { order: Order }) {
+  const { pricing } = order;
 
   return (
-    <div className="mt-5 rounded-xl border border-border/60 bg-card/40 p-4 backdrop-blur-sm">
-      <div className="flex items-center gap-2">
-        {orderProgress.map((step, index) => (
-          <div key={step} className="flex flex-1 items-center gap-2">
-            <span
-              aria-hidden
-              className={cn(
-                "size-2 shrink-0 rounded-full transition-colors",
-                index <= reached ? "bg-primary" : "bg-muted-foreground/25",
-              )}
-            />
-            {index < orderProgress.length - 1 && (
-              <span
-                aria-hidden
-                className={cn(
-                  "h-px flex-1 rounded-full",
-                  index < reached ? "bg-primary" : "bg-muted-foreground/25",
-                )}
-              />
-            )}
-          </div>
-        ))}
+    <dl className="mt-5 space-y-2.5 border-t border-border/50 pt-5 text-[13.5px]">
+      <div className="flex justify-between gap-4">
+        <dt className="text-muted-foreground">Subtotal</dt>
+        <dd className="font-mono tabular-nums">
+          {formatMoney(pricing.subtotal)}
+        </dd>
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between gap-4">
-        <p className="font-mono text-[10.5px] tracking-[0.16em] text-primary uppercase">
-          {labels[status]}
-        </p>
-        {eta && <p className="text-[12px] text-muted-foreground">{eta}</p>}
+      {pricing.discount > 0 && (
+        <div className="flex justify-between gap-4">
+          <dt className="min-w-0 truncate text-muted-foreground">
+            Discount
+            {pricing.couponCode && (
+              <span className="ml-1.5 font-mono text-[11px] tracking-widest text-primary uppercase">
+                {pricing.couponCode}
+              </span>
+            )}
+          </dt>
+          <dd className="font-mono tabular-nums text-primary">
+            &minus;{formatMoney(pricing.discount)}
+          </dd>
+        </div>
+      )}
+
+      {pricing.tax > 0 && (
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">
+            Tax{pricing.taxPercentage ? ` (${pricing.taxPercentage}%)` : ""}
+          </dt>
+          <dd className="font-mono tabular-nums">{formatMoney(pricing.tax)}</dd>
+        </div>
+      )}
+
+      {pricing.tip > 0 && (
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">
+            Tip{pricing.tipPercentage ? ` (${pricing.tipPercentage}%)` : ""}
+          </dt>
+          <dd className="font-mono tabular-nums">{formatMoney(pricing.tip)}</dd>
+        </div>
+      )}
+
+      <div className="flex items-baseline justify-between gap-4 border-t border-border/50 pt-3">
+        <dt className="font-medium">Total</dt>
+        <dd className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
+          {formatMoney(pricing.total)}
+        </dd>
       </div>
-    </div>
+    </dl>
   );
 }
 
-function EmptyOrders({ cleared }: { cleared: boolean }) {
+function Pager({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card/60 disabled:hover:text-foreground"
+    >
+      {children}
+    </button>
+  );
+}
+
+function Blank({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="px-5 py-20 text-center sm:px-8 sm:py-24">
       <span className="mx-auto grid size-11 place-items-center rounded-full border border-border bg-card text-muted-foreground">
@@ -451,26 +613,38 @@ function EmptyOrders({ cleared }: { cleared: boolean }) {
       </span>
 
       <h3 className="mx-auto mt-7 max-w-[20ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[26px] leading-[1.05] font-medium tracking-[-0.04em] text-transparent sm:text-[32px]">
-        {cleared ? "Nothing matches that" : "No orders yet"}
+        {title}
       </h3>
 
       <p className="mx-auto mt-4 max-w-[46ch] text-[13.5px] leading-[1.7] text-muted-foreground">
-        {cleared
-          ? "Try another search, or clear the filter to see everything on the account."
-          : "Pick a counter on the board and your first docket will show up here."}
+        {body}
       </p>
 
-      {!cleared && (
-        <Link
-          href="/menu"
-          className="group mt-8 inline-flex h-11 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          Browse the board
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
-            <ChevronRightIcon className="size-4" />
-          </span>
-        </Link>
-      )}
+      {action}
     </div>
+  );
+}
+
+function OrdersSkeleton() {
+  return (
+    <ul aria-hidden role="list" className="divide-y divide-border/50">
+      {[0, 1, 2].map((row) => (
+        <li key={row} className={cn("space-y-4 py-6", CELL)}>
+          <div className="flex justify-between gap-4">
+            <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/10" />
+            <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/10" />
+          </div>
+          <div className="h-3 w-56 animate-pulse rounded bg-muted-foreground/10" />
+          <div className="flex gap-2">
+            {[0, 1, 2].map((thumb) => (
+              <div
+                key={thumb}
+                className="size-12 animate-pulse rounded-xl bg-muted-foreground/10"
+              />
+            ))}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

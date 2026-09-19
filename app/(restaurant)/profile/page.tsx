@@ -6,6 +6,7 @@ import { hasNoPasswordYet } from "@/lib/auth/api";
 import { AUTH_ROUTES } from "@/lib/auth/constants";
 
 import { ChangePasswordCard } from "./_components/ChangePasswordCard";
+import { CloseAccountCard } from "./_components/CloseAccountCard";
 import { ProfileForm } from "./_components/ProfileForm";
 
 export const metadata: Metadata = {
@@ -44,6 +45,10 @@ export default async function ProfilePage() {
         // there for them to guess at.
         needsCurrentPassword={!hasNoPasswordYet(account)}
       />
+
+      {/* Last, and on its own: everything above changes something, this one
+          ends the account. */}
+      <CloseAccountCard />
     </>
   );
 }

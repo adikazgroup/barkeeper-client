@@ -7,12 +7,12 @@
  * is on it happens on the server, in `PopularDishes`.
  */
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 import type { FoodItem } from "@/app/(restaurant)/menu/_type";
 import { Price } from "@/app/(restaurant)/menu/_components/price";
+import SafeImage from "@/components/ui/SafeImage";
 import { cn } from "@/lib/utils";
 
 import { staggerChild, staggerParent } from "./Reveal";
@@ -32,24 +32,22 @@ function Plate({ food }: { food: FoodItem }) {
       <Link
         href={href}
         className={cn(
-          "group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-2",
+          "group flex h-full flex-col rounded-2xl border border-border/60 bg-card/40 p-2",
           "transition-[border-color,box-shadow] duration-300 ease-out",
           "hover:border-primary/30 hover:shadow-[0_28px_60px_-40px_rgba(0,0,0,0.5)]",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         )}
       >
-        {/* Square: the photographs are landscape, so a taller frame crops the
-            plate rather than showing more of it. */}
+
         <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
-          {food.image?.url && (
-            <Image
-              src={food.image.url}
-              alt={food.image.alt || food.name}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-              className="ani5 object-cover group-hover:scale-[1.04]"
-            />
-          )}
+          <SafeImage
+            src={food.image?.url}
+            alt={food.image?.alt || food.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+            fallbackClassName="flex h-full w-full items-center justify-center text-muted-foreground"
+            className="ani5 object-cover group-hover:scale-[1.04]"
+          />
 
           {badge && (
             <span className="absolute top-3 left-3 rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-foreground capitalize backdrop-blur-sm">

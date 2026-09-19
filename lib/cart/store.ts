@@ -179,3 +179,14 @@ export function removeItem(itemId: string) {
 export function clearCart() {
   return call("", { method: "DELETE" });
 }
+
+/**
+ * Take a docket that arrived by another road.
+ *
+ * `/orders/my/:id/reorder` answers with the whole priced cart, so re-reading
+ * `/carts` straight afterwards would only ask for what is already in hand —
+ * and would leave the navbar badge a request behind in the meantime.
+ */
+export function adoptCart(cart: Cart) {
+  set({ cart, pending: false, status: "ready", error: null });
+}
