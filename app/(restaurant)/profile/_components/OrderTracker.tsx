@@ -301,7 +301,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
                     alt={item.image?.alt || item.name}
                     fill
                     sizes="48px"
-                    fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
                     className="object-cover"
                   />
                 </div>

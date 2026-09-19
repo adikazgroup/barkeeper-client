@@ -12,76 +12,129 @@ import { useLogout } from "@/hooks/useLogout";
  * The account's three rooms, in the order a customer walks them: who you are,
  * what you ordered, what it cost.
  */
-const sections = [
-  { href: "/profile", label: "Profile", icon: UserIcon },
-  { href: "/profile/orders", label: "Orders", icon: Receipt },
-  { href: "/profile/transactions", label: "Transactions", icon: CreditCard },
+const SECTIONS = [
+  {
+    href: "/profile",
+    label: "Profile",
+    hint: "Name, photo, password",
+    icon: UserIcon,
+  },
+  {
+    href: "/profile/orders",
+    label: "Orders",
+    hint: "Dockets and tracking",
+    icon: Receipt,
+  },
+  {
+    href: "/profile/transactions",
+    label: "Transactions",
+    hint: "Payments and refunds",
+    icon: CreditCard,
+  },
 ];
 
 /**
- * The rooms, as one rail rather than a column beside them.
+ * The rooms, as a column beside the page rather than a rail above it.
  *
- * It is the board's counter rail, reused: the same pill container, the same
- * primary ground under the live one. Three rooms do not fill a sidebar — they
- * left a tall rule with nothing against it and took a third of the width off
- * the orders table. Across the top the content gets the whole frame, and the
- * rail sticks under the site header so it is still there when the reader is
- * halfway down a docket.
+ * Drawn as the frame's left cell, the way the FAQ and the docket carry their
+ * index: a rule between it and the content, and pinned so it stays put while a
+ * long list of orders scrolls. Signing out lives at its foot, ruled off — it
+ * belongs to the account, not to any one room, and it is the one control here
+ * that ends the session rather than moving between pages.
+ *
+ * Below `lg` there is no column to be beside, so it lays itself back out as
+ * the scrollable pill rail the board uses.
  */
 export function ProfileNav() {
   const pathname = usePathname();
   const { logout, loggingOut } = useLogout();
 
-  // `/profile` is a prefix of the other two, so only it matches exactly.
   const isActive = (href: string) =>
     href === "/profile" ? pathname === href : pathname.startsWith(href);
 
   return (
-    <div className="sticky top-16 z-30 border-b border-border/50 bg-background/85 backdrop-blur-md">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between gap-4 border-x border-border/50 px-5 py-3 sm:px-8">
-          <nav aria-label="Account sections" className="min-w-0">
+    <aside className="border-b border-border/50 lg:border-r lg:border-b-0">
+      <div className="lg:sticky lg:top-16">
+        <div className="px-5 py-5 sm:px-8 lg:py-8">
+          <p className="hidden font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase lg:block">
+            Your account
+          </p>
+
+          <nav aria-label="Account sections">
             <ul
               role="list"
-              className="scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
+              className={cn(
+                "scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm",
+                "lg:mt-5 lg:block lg:space-y-1 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none",
+              )}
             >
-              {sections.map((section) => {
+              {SECTIONS.map((section) => {
                 const active = isActive(section.href);
 
                 return (
-                  <li key={section.href} className="shrink-0">
+                  <li key={section.href} className="shrink-0 lg:shrink">
                     <Link
                       href={section.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "lg:flex lg:items-start lg:gap-3 lg:rounded-lg lg:px-3 lg:py-2.5 lg:whitespace-normal",
                         active
-                          ? "bg-primary text-background"
-                          : "text-muted-foreground hover:text-foreground",
+                          ? "bg-primary text-foreground"
+                          : "text-muted-foreground hover:text-foreground lg:hover:bg-muted",
                       )}
                     >
-                      <section.icon className="size-4 shrink-0" />
-                      {section.label}
+                      <section.icon className="size-4 shrink-0 lg:mt-0.5" />
+
+                      <span className="lg:flex lg:min-w-0 lg:flex-col">
+                        {section.label}
+                        <span
+                          className={cn(
+                            "hidden text-[11.5px] leading-normal font-normal lg:mt-0.5 lg:block",
+                            active
+                              ? "text-foreground/70"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {section.hint}
+                        </span>
+                      </span>
                     </Link>
                   </li>
                 );
               })}
             </ul>
           </nav>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => logout()}
-            disabled={loggingOut}
-            className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <LogoutIcon className="size-4 shrink-0" />
-            <span className="hidden sm:inline">
-              {loggingOut ? "Signing out…" : "Sign out"}
-            </span>
-          </button>
+        <div className="hidden border-y border-border/50 px-5 py-3 sm:px-8 lg:block">
+          <SignOut logout={logout} loggingOut={loggingOut} />
         </div>
       </div>
-    </div>
+
+      <div className="border-t border-border/50 px-5 py-3 sm:px-8 lg:hidden">
+        <SignOut logout={logout} loggingOut={loggingOut} />
+      </div>
+    </aside>
+  );
+}
+
+function SignOut({
+  logout,
+  loggingOut,
+}: {
+  logout: () => void;
+  loggingOut: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => logout()}
+      disabled={loggingOut}
+      className="inline-flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors duration-200 hover:bg-danger/10 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <LogoutIcon className="size-4 shrink-0" />
+      {loggingOut ? "Signing out…" : "Sign out"}
+    </button>
   );
 }

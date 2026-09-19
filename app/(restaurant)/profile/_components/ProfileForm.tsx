@@ -14,7 +14,7 @@ import {
   TrashIcon,
   UserIcon,
 } from "@/components/icons/Icons";
-import { Leaf, MapPin, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
 import { AuthApiError, updateMe, type ProfileUpdate } from "@/lib/auth/api";
 import {
   AVATAR_ACCEPT,
@@ -22,43 +22,21 @@ import {
   AVATAR_TYPES,
 } from "@/lib/auth/constants";
 import { cn } from "@/lib/utils";
-import { demoUser, dietaryOptions } from "../_data";
 import { SectionCard } from "./SectionCard";
 
-/** Everything the form can change, kept in one shape for one `useState`. */
+/**
+ * Everything the form can change.
+ *
+ * One field per thing `PATCH /users/me` actually stores, and nothing else. A
+ * field with nowhere to go is worse than a missing one: the customer fills it
+ * in, presses save, is told it saved, and it is gone on the next load.
+ */
 interface FormState {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  dateOfBirth: string;
-  addressLabel: string;
-  line1: string;
-  line2: string;
-  city: string;
-  postcode: string;
-  dietary: string[];
-  orderUpdates: boolean;
-  offers: boolean;
-  newsletter: boolean;
 }
-
-const initialState: FormState = {
-  firstName: demoUser.firstName,
-  lastName: demoUser.lastName,
-  email: demoUser.email,
-  phone: demoUser.phone,
-  dateOfBirth: demoUser.dateOfBirth,
-  addressLabel: demoUser.address.label,
-  line1: demoUser.address.line1,
-  line2: demoUser.address.line2,
-  city: demoUser.address.city,
-  postcode: demoUser.address.postcode,
-  dietary: demoUser.preferences.dietary,
-  orderUpdates: demoUser.preferences.orderUpdates,
-  offers: demoUser.preferences.offers,
-  newsletter: demoUser.preferences.newsletter,
-};
 
 /** What `GET /users/me` knows about the customer, flattened for this form. */
 export interface Account {
@@ -71,24 +49,16 @@ export interface Account {
 }
 
 /**
- * The name, email, phone and photo come from the account; the address and
- * preferences are still demo data, because the backend has no endpoint for
- * them yet. Keeping them apart is what lets "Discard changes" stay honest — it
- * returns to what the account says, not to a stranger's details.
- *
  * The backend stores one `name`, so the first word is taken as the first name
- * and whatever follows as the last.
+ * and whatever follows as the last. They are joined back up on save.
  */
 function accountState(account: Account): FormState {
   const [firstName, ...rest] = account.name.trim().split(/\s+/);
 
   return {
-    ...initialState,
-    firstName: firstName || initialState.firstName,
+    firstName: firstName ?? "",
     lastName: rest.join(" "),
-    email: account.email || initialState.email,
-    // An empty string, not the demo number: a customer who has not given one
-    // should see an empty field asking for it, not someone else's.
+    email: account.email,
     phone: account.phone,
   };
 }
@@ -128,14 +98,6 @@ export function ProfileForm({ account }: { account: Account }) {
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
-
-  const toggleDietary = (option: string) =>
-    setForm((current) => ({
-      ...current,
-      dietary: current.dietary.includes(option)
-        ? current.dietary.filter((entry) => entry !== option)
-        : [...current.dietary, option],
-    }));
 
   /** Back to what the account says — fields, photo and all. */
   const discard = () => {
@@ -199,9 +161,6 @@ export function ProfileForm({ account }: { account: Account }) {
 
     const phone = form.phone.trim();
 
-    // Only what the endpoint actually stores. The address, birthday and
-    // preferences below have nowhere to go yet, and an `email` in the payload
-    // is a 400 — which is why that field is read-only.
     const payload: ProfileUpdate = {
       name,
       // `null`, not an empty string: that is the only way to clear a number.
@@ -372,131 +331,7 @@ export function ProfileForm({ account }: { account: Account }) {
               ) : undefined
             }
           />
-          <Field
-            label="Date of birth"
-            type="date"
-            value={form.dateOfBirth}
-            onChange={(value) => set("dateOfBirth", value)}
-            hint="We send a plate on the house for the day."
-            disabled={saving}
-          />
         </div>
-      </SectionCard>
-
-      {/* ─── Where it goes ─── */}
-      <SectionCard
-        title="Delivery address"
-        description="Where the driver goes when you pick delivery at checkout."
-        icon={<MapPin className="size-4" />}
-      >
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field
-            label="Label"
-            value={form.addressLabel}
-            onChange={(value) => set("addressLabel", value)}
-            hint="Home, work — whatever you’ll recognise."
-          />
-          <Field
-            label="Address line 1"
-            value={form.line1}
-            onChange={(value) => set("line1", value)}
-            autoComplete="address-line1"
-          />
-          <Field
-            label="Address line 2"
-            value={form.line2}
-            onChange={(value) => set("line2", value)}
-            autoComplete="address-line2"
-          />
-          <Field
-            label="City"
-            value={form.city}
-            onChange={(value) => set("city", value)}
-            autoComplete="address-level2"
-          />
-          <Field
-            label="Eircode"
-            value={form.postcode}
-            onChange={(value) => set("postcode", value)}
-            autoComplete="postal-code"
-          />
-        </div>
-      </SectionCard>
-
-      {/* ─── How you like it ─── */}
-      <SectionCard
-        title="At the table"
-        description="What the kitchen should know before it starts on your order."
-        icon={<Leaf className="size-4" />}
-      >
-        <fieldset>
-          <legend className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
-            Dietary notes
-          </legend>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {dietaryOptions.map((option) => {
-              const checked = form.dietary.includes(option);
-              return (
-                <label
-                  key={option}
-                  className={cn(
-                    "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] transition-colors duration-200",
-                    checked
-                      ? "border-primary/40 bg-primary/10 font-medium text-primary"
-                      : "border-border bg-card/60 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleDietary(option)}
-                    className="sr-only"
-                  />
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded-full border transition-colors",
-                      checked
-                        ? "border-primary bg-primary text-background"
-                        : "border-current opacity-40",
-                    )}
-                  >
-                    {checked && <CheckIcon className="size-2.5" />}
-                  </span>
-                  {option}
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="mt-9">
-          <legend className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
-            Keep me posted
-          </legend>
-
-          <div className="mt-2 divide-y divide-border/50">
-            <Toggle
-              label="Order updates"
-              description="Texts when the kitchen starts and when the driver leaves."
-              checked={form.orderUpdates}
-              onChange={(value) => set("orderUpdates", value)}
-            />
-            <Toggle
-              label="Offers and specials"
-              description="The board changes with the delivery — we’ll say when."
-              checked={form.offers}
-              onChange={(value) => set("offers", value)}
-            />
-            <Toggle
-              label="Monthly newsletter"
-              description="One email a month. Nothing in between."
-              checked={form.newsletter}
-              onChange={(value) => set("newsletter", value)}
-            />
-          </div>
-        </fieldset>
       </SectionCard>
 
       {/* The password lives in its own form, under this one — it posts to a
@@ -628,53 +463,5 @@ function VerifiedBadge({ verified }: { verified: boolean }) {
       {verified && <CheckIcon className="size-3" />}
       {verified ? "Verified" : "Unverified"}
     </span>
-  );
-}
-
-/** A switch, written as a real checkbox so it reaches the keyboard. */
-function Toggle({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 py-4">
-      <span className="min-w-0">
-        <span className="block text-[13.5px] font-medium tracking-[-0.01em]">
-          {label}
-        </span>
-        <span className="mt-1 block max-w-[52ch] text-[12.5px] leading-[1.7] text-muted-foreground">
-          {description}
-        </span>
-      </span>
-
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="peer sr-only"
-      />
-      <span
-        aria-hidden
-        className={cn(
-          "mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-colors",
-          "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2",
-          checked ? "border-primary bg-primary" : "border-border bg-card",
-        )}
-      >
-        <span
-          className={cn(
-            "size-4.5 rounded-full transition-transform duration-200",
-            checked ? "translate-x-5 bg-background" : "bg-muted-foreground/40",
-          )}
-        />
-      </span>
-    </label>
   );
 }

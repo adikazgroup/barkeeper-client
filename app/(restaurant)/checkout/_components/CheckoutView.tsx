@@ -11,6 +11,7 @@ import {
   ChevronRightIcon,
   ShoppingBagIcon,
 } from "@/components/icons/Icons";
+import { Calendar, TimePicker } from "@/components/ui";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { placeOrder, quoteOrder } from "@/lib/orders/client";
@@ -25,6 +26,42 @@ const CELL = "px-5 sm:px-8";
 /** What a tip usually is, and the way out of the three. */
 const TIP_PRESETS = [0, 10, 15, 20];
 
+/**
+ * When a collection slot can be asked for, on any given date.
+ *
+ * Two windows, not one: the kitchen runs 11am to 2am, so on any single date it
+ * is open at the start of the day and again from late morning. Keep in step
+ * with `SERVICE_FACTS` in `lib/dummyData/promotions.ts` — an hour promised on
+ * the home page and refused here is worse than either being wrong alone.
+ */
+const PICKUP_WINDOWS = [
+  { from: "00:00", to: "02:00" },
+  { from: "11:00", to: "23:45" },
+];
+
+/** A date as `YYYY-MM-DD` in the reader's own zone, not UTC. */
+function toDateKey(date: Date): string {
+  const shifted = new Date(date);
+  shifted.setMinutes(shifted.getMinutes() - shifted.getTimezoneOffset());
+  return shifted.toISOString().slice(0, 10);
+}
+
+/**
+ * The same key back as a local Date at midnight.
+ *
+ * Handing the calendar the bare string would not do: `new Date("2026-09-19")`
+ * is read as *UTC* midnight, which anywhere west of Greenwich is the evening
+ * before — so the day picked and the day shown would differ by one.
+ */
+function fromDateKey(key: string): Date | null {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  if (!parts) return null;
+
+  return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+}
+
+/** The time now, as `HH:mm`. */
+const nowClock = () => localNow().slice(11, 16);
 
 export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const router = useRouter();
@@ -35,7 +72,11 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const [scheduleType, setScheduleType] = useState<"asap" | "scheduled">(
     "asap",
   );
-  const [slotLocal, setSlotLocal] = useState("");
+  // Kept as two fields rather than one `datetime-local` string: the day comes
+  // from the calendar and the time from the slot list, and they are only put
+  // back together for the backend, which still wants one instant.
+  const [slotDate, setSlotDate] = useState("");
+  const [slotTime, setSlotTime] = useState("");
   const [tipMode, setTipMode] = useState<"percentage" | "amount">("percentage");
   const [tipPercentage, setTipPercentage] = useState(10);
   const [tipAmount, setTipAmount] = useState("");
@@ -47,6 +88,19 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
 
+  // Midnight, not now: the calendar compares whole days against `minDate`, so
+  // a `minDate` carrying the current time would disable today itself — and
+  // ordering for eight this evening is the commonest thing there is.
+  const today = useMemo(() => {
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    return midnight;
+  }, []);
+
+  const isToday = slotDate === toDateKey(today);
+
+  // Neither half alone is a slot, so the instant only exists once both are in.
+  const slotLocal = slotDate && slotTime ? `${slotDate}T${slotTime}` : "";
   const slotStartAt = toIsoInstant(slotLocal);
   const couponCode = applied?.code ?? "";
   const customTip = Number(tipAmount);
@@ -218,7 +272,8 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                 label="Pickup time"
                 hint="The kitchen confirms the exact minute once the order is in."
               >
-                <div className="flex flex-wrap gap-2">
+
+                <div className="flex flex-wrap items-center gap-2">
                   <Choice
                     active={scheduleType === "asap"}
                     onClick={() => setScheduleType("asap")}
@@ -231,28 +286,41 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   >
                     Pick a time
                   </Choice>
+
+                  {scheduleType === "scheduled" && (
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+                      <Calendar
+                        value={fromDateKey(slotDate)}
+                        onChange={(date) =>
+                          setSlotDate(date ? toDateKey(date) : "")
+                        }
+                        minDate={today}
+
+                        format="dd MMM yyyy"
+                        placeholder="Pick a day"
+                        allowManualInput={false}
+                        className="w-full sm:w-44"
+                        inputClass="h-9 rounded-full border-border bg-card/60 pr-4 pl-10 text-[13px] backdrop-blur-sm"
+                      />
+
+                      <TimePicker
+                        value={slotTime}
+                        onChange={setSlotTime}
+                        windows={PICKUP_WINDOWS}
+                        step={15}
+                        min={isToday ? nowClock() : undefined}
+                        disabled={!slotDate}
+                        aria-label="Pickup time"
+                        className="w-full sm:w-36"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {scheduleType === "scheduled" && (
-                  <div className="mt-4">
-                    <label htmlFor="slot" className="sr-only">
-                      Pickup time
-                    </label>
-                    <input
-                      id="slot"
-                      type="datetime-local"
-                      value={slotLocal}
-                      min={localNow()}
-                      onChange={(event) => setSlotLocal(event.target.value)}
-                      className="h-11 w-full max-w-xs rounded-full border border-border bg-card/60 px-4 text-[13.5px] backdrop-blur-sm transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none sm:w-auto"
-                    />
-
-                    {!slotStartAt && (
-                      <p className="mt-2.5 text-[12px] text-muted-foreground">
-                        Pick a time to see what the order comes to.
-                      </p>
-                    )}
-                  </div>
+                {scheduleType === "scheduled" && !slotStartAt && (
+                  <p className="mt-2.5 text-[12px] text-muted-foreground">
+                    Pick a time to see what the order comes to.
+                  </p>
                 )}
               </Field>
 
@@ -329,7 +397,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   autoComplete="tel"
                   placeholder="+1 555 0100"
                   required
-                  className="h-11 w-full max-w-xs rounded-full border border-border bg-card/60 px-4 text-[13.5px] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
+                  className="h-11 w-full  rounded-full border border-border bg-card/60 px-4 text-[13.5px] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
                 />
               </Field>
 
@@ -348,7 +416,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   rows={3}
                   maxLength={500}
                   placeholder="No sesame on the bun, please."
-                  className="w-full resize-none rounded-2xl border border-border bg-card/60 px-4 py-3 text-[13.5px] leading-[1.7] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-border bg-card/60 px-4 py-3 text-[13.5px] leading-[1.7] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
                 />
               </Field>
 
@@ -555,9 +623,7 @@ function Row({
           </span>
         )}
       </dt>
-      <dd
-        className={cn("font-mono tabular-nums", accent && "text-primary")}
-      >
+      <dd className={cn("font-mono tabular-nums", accent && "text-primary")}>
         {typeof value === "number"
           ? `${value < 0 ? "−" : ""}${formatMoney(Math.abs(value))}`
           : "—"}
@@ -569,7 +635,10 @@ function Row({
 function Issue({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2 text-[12.5px] leading-[1.6] text-foreground">
-      <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0 text-danger" />
+      <TriangleAlert
+        aria-hidden
+        className="mt-0.5 size-3.5 shrink-0 text-danger"
+      />
       {children}
     </li>
   );

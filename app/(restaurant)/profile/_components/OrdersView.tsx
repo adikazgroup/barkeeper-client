@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { Clock, Loader2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +19,13 @@ import {
   reorder as reorderApi,
   retryMyPayment,
 } from "@/lib/orders/client";
-import { formatDateTime, pickupLabel, statusMeta } from "@/lib/orders/format";
+import {
+  formatDateTime,
+  paymentLabel,
+  pickupLabel,
+  statusHint,
+  statusMeta,
+} from "@/lib/orders/format";
 import { isCancellable, type Order } from "@/lib/orders/types";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
@@ -250,9 +256,9 @@ function OrderRow({
   const [busy, setBusy] = useState(false);
 
   const meta = statusMeta(order.status);
+  const hint = statusHint(order.status);
   const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const unpaid =
-    order.status === "pending" && order.payment?.status !== "paid";
+  const unpaid = order.status === "pending" && order.payment?.status !== "paid";
 
   const handleReorder = async () => {
     setBusy(true);
@@ -328,86 +334,104 @@ function OrderRow({
   return (
     <li>
       <div className={cn("py-6", CELL)}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h3 className="font-mono text-[14px] tracking-[0.04em] tabular-nums">
-                {order.orderNumber || order._id.slice(-8).toUpperCase()}
-              </h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h3 className="font-mono text-[14px] tracking-[0.04em] tabular-nums">
+              {order.orderNumber || order._id.slice(-8).toUpperCase()}
+            </h3>
 
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-inset",
+                meta.className,
+              )}
+            >
               <span
+                aria-hidden
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-inset",
-                  meta.className,
+                  "size-1.5 rounded-full",
+                  meta.dot,
+                  meta.live && "animate-pulse",
                 )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    meta.dot,
-                    meta.live && "animate-pulse",
-                  )}
-                />
-                {meta.label}
-              </span>
-            </div>
-
-            <p className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="size-3.5" />
-                {formatDateTime(order.createdAt)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Receipt className="size-3.5" />
-                {pickupLabel(order)}
-              </span>
-            </p>
+              />
+              {meta.label}
+            </span>
           </div>
 
-          <div className="text-right">
-            <p className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
-              {formatMoney(order.pricing.total)}
-            </p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {itemCount} {itemCount === 1 ? "plate" : "plates"}
-            </p>
-          </div>
+          <p className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
+            {formatMoney(order.pricing.total)}
+          </p>
         </div>
 
-        {/* The plates, as a row of thumbnails until the docket is opened. */}
-        <div className="mt-5 flex items-center gap-2">
-          {order.items.slice(0, 4).map((item, index) => (
-            <div
-              key={`${order._id}-thumb-${index}`}
-              className="size-12 shrink-0 rounded-xl border border-border/60 bg-card p-1"
-            >
-              <div className="relative size-full overflow-hidden rounded-lg bg-muted">
-                <SafeImage
-                  src={item.image?.url}
-                  alt={item.image?.alt || item.name}
-                  fill
-                  sizes="48px"
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
-                  className="object-cover"
-                />
-              </div>
+        {hint && (
+          <p className="mt-2.5 text-[13px] leading-[1.6] text-muted-foreground">
+            {hint}
+          </p>
+        )}
+
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+          <Fact icon={Clock} label="Placed">
+            {formatDateTime(order.createdAt)}
+          </Fact>
+
+          <Fact icon={Receipt} label="Pickup">
+            {pickupLabel(order)}
+          </Fact>
+
+          <Fact label="Plates">
+            {itemCount} {itemCount === 1 ? "plate" : "plates"}
+          </Fact>
+
+          <Fact label="Payment">
+            {order.payment?.status === "paid"
+              ? "Paid"
+              : unpaid
+                ? "Not paid yet"
+                : paymentLabel(order)}
+          </Fact>
+        </dl>
+      </div>
+
+      {/* Its own row of the frame, so the rule above it reaches both edges
+          rather than stopping at the text. */}
+      <div
+        className={cn(
+          "flex items-center gap-2 border-t border-border/50 bg-card/20 py-4",
+          CELL,
+        )}
+      >
+        {order.items.slice(0, 4).map((item, index) => (
+          <div
+            key={`${order._id}-thumb-${index}`}
+            className="size-12 shrink-0 rounded-xl border border-border/60 bg-card p-1"
+          >
+            <div className="relative size-full overflow-hidden rounded-lg bg-muted">
+              <SafeImage
+                src={item.image?.url}
+                alt={item.image?.alt || item.name}
+                fill
+                sizes="48px"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
+                className="object-cover"
+              />
             </div>
-          ))}
+          </div>
+        ))}
 
-          {order.items.length > 4 && (
-            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-              +{order.items.length - 4}
-            </span>
-          )}
+        {order.items.length > 4 && (
+          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            +{order.items.length - 4}
+          </span>
+        )}
 
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
             aria-expanded={open}
-            className="ml-auto inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card/60 px-3.5 py-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card/60 px-3.5 py-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {open ? "Hide" : "Details"}
+            {open ? "Hide details" : "See details"}
             <ChevronDownIcon
               className={cn(
                 "size-3.5 transition-transform duration-200",
@@ -415,6 +439,40 @@ function OrderRow({
               )}
             />
           </button>
+
+          {/* The one thing this order is waiting for, out where it can be
+                seen. Buried with the rest, an unpaid order looks like it is
+                simply sitting there rather than asking to be paid. */}
+          {unpaid ? (
+            <button
+              type="button"
+              onClick={() => void handlePay()}
+              disabled={busy}
+              className="inline-flex h-9 cursor-pointer items-center rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {busy ? "One moment…" : "Pay now"}
+            </button>
+          ) : meta.live ? (
+            <Link
+              href={`/profile/orders/${order._id}`}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Receipt className="size-3.5" />
+              Track order
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void handleReorder()}
+              disabled={busy}
+              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {busy && (
+                <Loader2 aria-hidden className="size-3.5 animate-spin" />
+              )}
+              Order again
+            </button>
+          )}
         </div>
       </div>
 
@@ -433,7 +491,7 @@ function OrderRow({
                       alt={item.image?.alt || item.name}
                       fill
                       sizes="48px"
-                      fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
+                      fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
                       className="object-cover"
                     />
                   </div>
@@ -460,25 +518,9 @@ function OrderRow({
           {/* A review is only possible once the order has been collected, and
               the block reads its own state — so it is mounted on exactly the
               orders that can have one, and only while the row is open. */}
-          {order.status === "completed" && (
-            <OrderReview orderId={order._id} />
-          )}
+          {order.status === "completed" && <OrderReview orderId={order._id} />}
 
           <div className="mt-6 flex flex-wrap gap-3">
-            {unpaid && (
-              <button
-                type="button"
-                onClick={() => void handlePay()}
-                disabled={busy}
-                className="group inline-flex h-11 cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {busy ? "One moment…" : "Pay for this order"}
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
-                  <ChevronRightIcon className="size-4" />
-                </span>
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => void handleReorder()}
@@ -494,7 +536,7 @@ function OrderRow({
               className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Receipt className="size-4" />
-              Track it
+              Full receipt
             </Link>
 
             {isCancellable(order) && (
@@ -520,6 +562,31 @@ function OrderRow({
  * Tax and tip are printed only when there were any: a zero tip row on an order
  * nobody tipped is noise, and the customer knows what they chose.
  */
+/** One labelled figure off a docket. */
+function Fact({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon?: ComponentType<{ className?: string }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+        {label}
+      </dt>
+      <dd className="mt-1.5 flex items-start gap-1.5 text-[13px] leading-[1.55]">
+        {Icon && (
+          <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+        )}
+        <span>{children}</span>
+      </dd>
+    </div>
+  );
+}
+
 export function PricingList({ order }: { order: Order }) {
   const { pricing } = order;
 

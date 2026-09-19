@@ -68,6 +68,26 @@ const NEUTRAL: StatusMeta = {
   dot: "bg-muted-foreground",
 };
 
+/**
+ * What the status means for the customer, in a sentence.
+ *
+ * The pill names a state; this says what is happening and whether anything is
+ * being waited on from them. A row that only says "Pending" leaves the reader
+ * to work out that nothing reaches the kitchen until they pay.
+ */
+const NEXT: Record<string, string> = {
+  pending: "Not paid yet — the kitchen starts once the payment goes through.",
+  confirmed: "Paid and with the kitchen. They will start on it shortly.",
+  preparing: "Being cooked now. We will say when it is ready to collect.",
+  ready: "Ready to collect at the counter.",
+  completed: "Collected. Thanks — tell us how it was.",
+  cancelled: "Cancelled. Nothing was charged, or it has been refunded.",
+};
+
+export function statusHint(status: string): string | null {
+  return NEXT[status] ?? null;
+}
+
 export function statusMeta(status: string): StatusMeta {
   return META[status] ?? { ...NEUTRAL, label: titleCase(status) };
 }
@@ -141,7 +161,9 @@ export function pickupLabel(order: Pick<Order, "pickupDetails">): string {
     return `Ready around ${formatDateTime(pickup.estimatedReadyAt)}`;
   }
 
-  return pickup.scheduleType === "scheduled" ? "Scheduled" : "As soon as possible";
+  return pickup.scheduleType === "scheduled"
+    ? "Scheduled"
+    : "As soon as possible";
 }
 
 /** How the payment stands, for the pill beside the status. */

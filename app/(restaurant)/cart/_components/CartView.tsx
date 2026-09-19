@@ -36,22 +36,7 @@ const MENU_HREF = "/menu";
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-/**
- * The docket, drawn in the page's own frame.
- *
- * The home page's sections are boxes: `max-w-7xl`, a rule down each side, and
- * everything inside divided by more rules rather than floated as separate
- * cards. The docket follows that — the lines and the total are two columns of
- * one box, split by a single rule, so the cart reads as the last section of the
- * site rather than a checkout bolted onto it.
- *
- * Everything here is the kitchen's own priced docket, read back over the cart
- * API, so the whole panel waits on `hydrated` rather than painting an empty
- * cart the customer then watches fill itself in. No figure on this page is
- * worked out here: the line totals, the subtotal and whether the docket can be
- * sent are all the backend's, because it is the side that knows what a plate
- * costs once its options are on it.
- */
+
 export function CartView() {
   const router = useRouter();
 
@@ -69,32 +54,16 @@ export function CartView() {
     clear,
   } = useCart();
 
-  // The code is quoted against the docket by the kitchen, never worked out
-  // here, and it is re-quoted whenever a line changes — so this figure always
-  // belongs to the subtotal printed beside it.
+
   const { applied, discount } = useCoupon();
   const total = Math.max(0, subtotal - discount);
-
-  // Which control is working, so the one that was pressed spins rather than
-  // the whole docket going quiet. `pending` from the store says *a* mutation
-  // is in flight, which is what keeps the others disabled; this says which.
   const [busy, setBusy] = useState<string | null>(null);
 
   if (!hydrated) return <CartSkeleton />;
-  // The docket belongs to an account, so there is nothing to show a visitor
-  // who has not signed in — and nothing they could send if there were.
   if (signedOut) return <SignedOutCart />;
   if (items.length === 0) return <EmptyCart />;
 
-  /**
-   * Every change to the docket goes through here.
-   *
-   * The cart API answers each mutation with the kitchen's own verdict, and
-   * that answer used to be dropped on the floor — a refused change looked
-   * exactly like one that worked. The toast is keyed on the control, so a
-   * reader leaning on the plus button replaces one message rather than
-   * stacking six.
-   */
+
   const run = async (
     key: string,
     action: () => CartResult,
@@ -141,7 +110,7 @@ export function CartView() {
     if (!isOrderable) {
       toast.error(
         issues[0]?.message ??
-          "Something on the docket is unavailable. Check the lines above.",
+        "Something on the docket is unavailable. Check the lines above.",
       );
       return;
     }
@@ -268,13 +237,11 @@ export function CartView() {
 
                 <CouponField />
 
-                {/* Whatever is blocking the whole docket, in the backend's own
-                    words — it is the only side that knows which of a dozen
-                    reasons it was. */}
+
                 {issues.length > 0 && (
                   <ul
                     role="list"
-                    className="mt-6 space-y-2 rounded-xl border border-danger/30 bg-danger/5 px-3.5 py-3"
+                    className="mt-6 space-y-2 rounded-lg border border-danger/30 bg-danger/5 px-3.5 py-3"
                   >
                     {issues.map((issue) => (
                       <li
@@ -357,7 +324,7 @@ function CartRow({
             src={line.image?.url || foodPlaceholder}
             alt={line.image?.alt || line.name}
             fill
-            fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
             className="object-cover"
             sizes="96px"
           />

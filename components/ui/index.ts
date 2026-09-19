@@ -47,6 +47,7 @@ export { MultipleSearchSelect } from "./select/MultipleSearchSelect";
 export { SearchSelect } from "./select/SearchSelect";
 export { Select } from "./select/Select";
 export { default as SimpleSelect } from "./select/SimpleSelect";
+export { TimePicker, type TimeWindow } from "./timePicker/TimePicker";
 
 export {
   Skeleton,

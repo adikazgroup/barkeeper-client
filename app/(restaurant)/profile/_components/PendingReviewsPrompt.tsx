@@ -83,7 +83,7 @@ export function PendingReviewsPrompt() {
             return (
               <li
                 key={order._id}
-                className="rounded-2xl border border-border/60 bg-card/40 px-4 py-3.5 backdrop-blur-sm"
+                className="rounded-lg border border-border/60 bg-card/40 px-4 py-3.5 backdrop-blur-sm"
               >
                 <div className="flex flex-wrap items-center gap-4">
                   {/* The plates, so the order is recognised by what was on it

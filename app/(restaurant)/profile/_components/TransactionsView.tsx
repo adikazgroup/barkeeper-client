@@ -156,7 +156,9 @@ export function TransactionsView() {
 
         <button
           type="button"
-          onClick={() => toast("Statements land with accounts.", { icon: "🍀" })}
+          onClick={() =>
+            toast("Statements land with accounts.", { icon: "🍀" })
+          }
           className="inline-flex h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[13.5px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           Download statement
@@ -186,18 +188,17 @@ export function TransactionsView() {
               Payments, refunds and rewards on your account
             </caption>
             <thead>
-              <tr className="border-b border-border/50">
+              <tr className="border-b border-border/50 bg-card/20">
                 {["Transaction", "Date", "Method", "Status", "Amount"].map(
                   (heading, index) => (
                     <th
                       key={heading}
                       scope="col"
                       className={cn(
-                        "py-4 font-mono text-[10.5px] font-normal tracking-[0.16em] text-muted-foreground uppercase",
-                        index === 0 && "pl-5 sm:pl-8",
-                        index === 4
-                          ? "pr-5 text-right sm:pr-8"
-                          : "pr-5 text-left",
+                        "border-border/50 py-3.5 font-mono text-[10.5px] font-normal tracking-[0.16em] text-muted-foreground uppercase",
+                        index < 4 && "border-r",
+                        index === 0 ? "px-5 sm:px-8" : "px-5",
+                        index === 4 ? "text-right sm:pr-8" : "text-left",
                       )}
                     >
                       {heading}
@@ -339,7 +340,7 @@ function StatusPill({ entry }: { entry: Transaction }) {
 function TransactionRow({ entry }: { entry: Transaction }) {
   return (
     <tr className="transition-colors duration-200 hover:bg-card/40">
-      <td className="py-4 pr-5 pl-5 sm:pl-8">
+      <td className="border-r border-border/50 px-5 py-4 sm:px-8">
         <div className="flex items-center gap-3">
           <KindMark kind={entry.kind} />
           <div className="min-w-0">
@@ -352,16 +353,16 @@ function TransactionRow({ entry }: { entry: Transaction }) {
           </div>
         </div>
       </td>
-      <td className="py-4 pr-5 text-[13px] whitespace-nowrap text-muted-foreground">
+      <td className="border-r border-border/50 px-5 py-4 text-[13px] whitespace-nowrap text-muted-foreground">
         {formatDateTime(entry.date)}
       </td>
-      <td className="py-4 pr-5 text-[13px] whitespace-nowrap text-muted-foreground">
+      <td className="border-r border-border/50 px-5 py-4 text-[13px] whitespace-nowrap text-muted-foreground">
         {entry.method}
       </td>
-      <td className="py-4 pr-5">
+      <td className="border-r border-border/50 px-5 py-4">
         <StatusPill entry={entry} />
       </td>
-      <td className="py-4 pr-5 text-right whitespace-nowrap sm:pr-8">
+      <td className="px-5 py-4 text-right whitespace-nowrap sm:pr-8">
         <Amount entry={entry} />
       </td>
     </tr>

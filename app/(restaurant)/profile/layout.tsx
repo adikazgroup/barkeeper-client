@@ -61,13 +61,17 @@ export default async function ProfileLayout({
           createdAt={account.createdAt}
         />
 
-        <ProfileNav />
-
         {/* The frame every room is drawn in — the same box the home page's
             sections sit in, so the account is measured against the same
-            edges. */}
+            edges. The rooms are listed down its left cell, the way the FAQ
+            and a docket carry their index. */}
         <div className="mx-auto max-w-7xl">
-          <div className="min-w-0 border-x border-border/50">{children}</div>
+          <div className="border-x border-border/50">
+            <div className="grid lg:grid-cols-[19rem_minmax(0,1fr)]">
+              <ProfileNav />
+              <div className="min-w-0">{children}</div>
+            </div>
+          </div>
         </div>
       </main>
     </AuthProvider>

@@ -8,17 +8,6 @@ import { useCoupon, type MyCoupon } from "@/hooks/useCoupon";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
 
-/**
- * The code, in the order summary.
- *
- * It sits under the totals rather than above them because that is the order it
- * is read in: what the plates come to, then what comes off. Nothing here works
- * out a discount — the field sends the code and prints the figure the kitchen
- * quoted back, the same way every other number on this page is the backend's.
- *
- * A customer with codes of their own does not have to remember one: the wallet
- * is listed below the field, and tapping one fills it in and tries it.
- */
 export function CouponField() {
   const { applied, myCoupons, pending, error, signedOut, apply, clear } =
     useCoupon();
@@ -32,14 +21,11 @@ export function CouponField() {
     if (pending) return;
 
     void apply(code).then((result) => {
-      // Only a code that worked is cleared out of the field — a refused one
-      // stays put so a typo can be fixed rather than retyped.
       if (result.ok) setCode("");
     });
   };
 
-  // The wallet is worth showing only while there is something in it that is
-  // not already on the docket.
+
   const wallet = myCoupons.filter((coupon) => coupon.code !== applied?.code);
 
   return (
@@ -136,7 +122,7 @@ export function CouponField() {
                     void apply(coupon.code);
                   }}
                   disabled={pending}
-                  className="group flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card/40 px-3 py-2.5 text-left transition-colors duration-200 hover:border-primary/40 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-left transition-colors duration-200 hover:border-primary/40 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Ticket
                     aria-hidden

@@ -81,7 +81,7 @@ export const FoodCard2 = ({
           src={item.image?.url || foodPlaceholder}
           alt={item.name}
           fill
-          fallbackClassName="flex h-full w-full items-center justify-center bg-primary/5"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
