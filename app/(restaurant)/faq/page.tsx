@@ -4,12 +4,7 @@ import Link from "next/link";
 import { FAQ_CATEGORIES, FAQ_ITEMS, faqByCategory } from "@/lib/dummyData";
 import { COMPANY, LEGAL_PAGES } from "@/lib/dummyData";
 import { ChevronRightIcon } from "@/components/icons/Icons";
-import {
-  ClosingCta,
-  HeroBackdrop,
-  SiteFooter,
-  SiteHeader,
-} from "../_components/home";
+import { HeroBackdrop } from "../_components/home";
 import { BeamBorder } from "../_components/home/BeamBorder";
 import { Reveal } from "../_components/home/Reveal";
 import { FaqAccordion } from "../_components/FaqAccordion";
@@ -54,7 +49,7 @@ function FaqJsonLd() {
 
 function Hero() {
   return (
-    <section className="relative isolate overflow-hidden">
+    <section className="relative -mt-16 isolate overflow-hidden pt-16">
       <HeroBackdrop />
 
       <div className="mx-auto max-w-7xl border-x border-border/50">
@@ -237,12 +232,9 @@ function StillStuck() {
               </p>
               <ul className="mt-5 space-y-1">
                 {[
-                  {
-                    label: "How it works, step by step",
-                    href: "/how-it-works",
-                  },
-                  { label: "What it connects to", href: "/integrations" },
-                  { label: "Plans and what they include", href: "/pricing" },
+                  { label: "Everything the kitchen has on", href: "/menu" },
+                  { label: "What is on offer this week", href: "/promotions" },
+                  { label: "Notes from behind the counter", href: "/blog" },
                   ...(privacy
                     ? [{ label: privacy.label, href: privacy.href }]
                     : []),
@@ -277,16 +269,11 @@ function StillStuck() {
 
 export default function FaqPage() {
   return (
-    <div className="min-h-screen bg-background" suppressHydrationWarning>
+    <main>
       <FaqJsonLd />
-      <SiteHeader />
-      <main>
-        <Hero />
-        <Questions />
-        <StillStuck />
-        <ClosingCta />
-      </main>
-      <SiteFooter />
-    </div>
+      <Hero />
+      <Questions />
+      <StillStuck />
+    </main>
   );
 }

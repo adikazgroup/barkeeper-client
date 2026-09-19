@@ -4,14 +4,14 @@ import Link from "next/link";
 
 import { COMPANY } from "@/lib/dummyData";
 import { ChevronRightIcon } from "@/components/icons/Icons";
-import { HeroBackdrop } from "../_components/home";
+import { ClosingCta, Faq, HeroBackdrop } from "../_components/home";
 import { BeamBorder } from "../_components/home/BeamBorder";
 import { Reveal } from "../_components/home/Reveal";
 
 export const metadata: Metadata = {
-  title: "About — Barkeeper",
+  title: "About — Barkeeper’s",
   description:
-    "Why we built an AI agent for the shops that sell in Instagram and Messenger threads, and what we hold ourselves to while running it.",
+    "A lively neighbourhood Irish bar in Hill East, Washington DC — award-winning wings, pub favourites, rotating taps and a room that fills up most nights.",
 };
 
 /**
@@ -31,28 +31,28 @@ const CELL = "px-5 sm:px-8";
  * these are the ones the product actually keeps.
  */
 const FACTS = [
-  { value: "5", label: "Channels in one inbox" },
-  { value: "3", label: "Languages, including Banglish" },
-  { value: "4", label: "Store platforms, plus an API" },
-  { value: "1", label: "Thread per customer" },
+  { value: "11am", label: "Kitchen on, seven days" },
+  { value: "2am", label: "Last call, every night" },
+  { value: "16", label: "Taps, rotating" },
+  { value: "1", label: "Neighbourhood bar in Hill East" },
 ];
 
 const BELIEFS = [
   {
-    title: "Answer in the thread",
-    body: "A customer who asks a price in a DM wants the price in that DM. Not a link to a website, not a ticket number, not a widget on a page they were never on.",
+    title: "No stiff rules",
+    body: "There is no dress code, no minimum spend and no wrong time to order wings. Come as you are, sit as long as you like, and order whatever you actually feel like eating.",
   },
   {
-    title: "Never invent an answer",
-    body: "The agent quotes the catalogue, the prices and the policies you gave it. Where it does not know, it stops and hands you the thread rather than guessing well.",
+    title: "Fresh, or not at all",
+    body: "Produce comes in that morning and the wings are brined the same day they are served. Nothing gets held over to save a delivery — if it is not right, it does not go on the board.",
   },
   {
-    title: "The shop keeps the last word",
-    body: "You can open any conversation and take over mid-sentence. The agent steps back with the history intact, and hands back when you are done.",
+    title: "The pour is worth the wait",
+    body: "A Guinness is pulled, left to settle, then topped. It takes the time it takes. The same goes for anything off the grill — hot and right beats quick and grey.",
   },
   {
-    title: "Your data stays your data",
-    body: "Conversations are used to answer that customer and to keep your agent's tone consistent. They are never shared with another shop, and never used to train general-purpose models.",
+    title: "Everyone gets the same welcome",
+    body: "Regulars and first-timers are served by the same people in the same way. Friendly faces are not a policy we wrote down, they are just who is behind the bar.",
   },
 ];
 
@@ -86,16 +86,15 @@ function AboutHero() {
 
           <Reveal delay={0.06}>
             <h1 className="mt-7 max-w-[19ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[40px] leading-[1.03] font-medium tracking-[-0.045em] text-transparent sm:text-[58px]">
-              Built for shops that sell in the inbox
+              A neighbourhood bar in Hill East
             </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
             <p className="mt-7 max-w-[54ch] text-[15px] leading-[1.7] text-muted-foreground sm:text-[16.5px]">
-              In Bangladesh a shop is a conversation. The catalogue is a
-              Facebook album, the storefront is an Instagram grid, and the
-              checkout is someone typing a delivery address at eleven at night.
-              We built the agent that keeps up with it.
+              Award-winning wings, pub favourites and a properly poured
+              Guinness, on a corner of Southeast DC. Fresh pours, tasty bites,
+              and a room that is easy to spend an evening in.
             </p>
           </Reveal>
         </div>
@@ -127,7 +126,7 @@ function AboutHero() {
   );
 }
 
-/** Why the product exists, with the inbox itself as the supporting picture. */
+/** What the place is, with the room itself as the supporting picture. */
 function Story() {
   return (
     <section className="border-t border-border/50">
@@ -136,12 +135,12 @@ function Story() {
           className={`flex flex-col gap-5 border-b border-border/50 py-10 sm:flex-row sm:items-center sm:justify-between ${CELL}`}
         >
           <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
-            Why we built it
+            What the place is
           </h2>
           <p className="max-w-[44ch] text-[14px] leading-[1.65] text-muted-foreground">
-            Not because inboxes are hard to read. Because there are more of them
-            than there are hours, and the ones that go unanswered were going to
-            be orders.
+            An Irish bar that happens to take its kitchen seriously — or a
+            kitchen that happens to have a very good bar attached. Nobody has
+            settled the argument.
           </p>
         </Reveal>
 
@@ -150,30 +149,29 @@ function Story() {
             className={`border-b border-border/50 py-11 lg:border-r lg:border-b-0 ${CELL}`}
           >
             <p className="max-w-[54ch] text-[15px] leading-[1.8] text-muted-foreground">
-              Every shop we spoke to told a version of the same story. The
-              messages arrive faster in the evening than anyone can type. A
-              customer asks whether the blue one is left in medium, waits nine
-              minutes, and buys it somewhere else. The size chart gets pasted
-              for the fortieth time that week.
+              Hill East is a neighbourhood before it is a destination, and this
+              is a neighbourhood bar. People come in after work without booking,
+              sit at the same end of the bar they always do, and stay longer
+              than they meant to. That is the whole ambition.
             </p>
             <p className="mt-5 max-w-[54ch] text-[15px] leading-[1.8] text-muted-foreground">
-              None of that is a support problem. It is a sales problem wearing a
-              support problem&rsquo;s clothes — and the tools built for it
-              assumed a website with a checkout, which is not how these shops
-              sell at all.
+              The wings are what people tell their friends about, and they have
+              the awards to back it up. Beyond those there are gourmet burgers
+              on hand-pressed beef with melty cheddar and house sauce, and the
+              pub favourites you would hope to find.
             </p>
             <p className="mt-5 max-w-[54ch] text-[15px] leading-[1.8] text-muted-foreground">
-              So the agent works where the customer already is, reads from the
-              stock you actually hold, and writes the order into the store when
-              the conversation closes. The shop keeps its voice. The customer
-              never learns there was software in the thread.
+              Behind the bar: Guinness poured the way it should be, taps that
+              rotate often enough to be worth asking about, craft cocktails that
+              do not take themselves too seriously, and a shelf of single malts
+              for the nights that call for one.
             </p>
 
             <Link
-              href="/#how-it-works"
+              href="/menu"
               className="group mt-9 inline-flex h-10 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-4 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5"
             >
-              See how it works
+              See the menu
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
                 <ChevronRightIcon className="size-4" />
               </span>
@@ -193,7 +191,7 @@ function Story() {
               <div className="relative aspect-4/5 w-full overflow-hidden rounded-lg bg-muted lg:aspect-auto">
                 <Image
                   src="/cta.png"
-                  alt="A pass in service, with orders going out as they are called"
+                  alt="The bar in service on a busy evening"
                   fill
                   sizes="(max-width: 1024px) 100vw, 520px"
                   className="object-cover"
@@ -207,7 +205,7 @@ function Story() {
   );
 }
 
-/** The rules we hold the agent to — the part a merchant is really buying. */
+/** The four things the bar holds itself to, whatever the night is doing. */
 function Beliefs() {
   return (
     <section className="border-t border-border/50">
@@ -216,11 +214,11 @@ function Beliefs() {
           className={`flex flex-col gap-5 border-b border-border/50 py-10 sm:flex-row sm:items-center sm:justify-between ${CELL}`}
         >
           <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
-            What we hold it to
+            What we hold ourselves to
           </h2>
           <p className="max-w-[44ch] text-[14px] leading-[1.65] text-muted-foreground">
-            An agent answering as your shop is answering as you. These are the
-            four rules we will not trade away for a better demo.
+            Four things that do not change, whether the room is empty on a wet
+            Tuesday or three deep at the bar on a Saturday.
           </p>
         </Reveal>
 
@@ -302,14 +300,13 @@ function Where() {
                 The short version
               </p>
               <p className="mt-5 max-w-[46ch] text-[24px] leading-[1.25] font-medium tracking-[-0.035em] sm:text-[30px]">
-                We are a small team in Dhaka building for shops we can go and
-                visit.
+                Come hungry, leave smiling. That is the entire business plan.
               </p>
               <p className="mt-5 max-w-[52ch] text-[14px] leading-[1.75] text-muted-foreground">
-                That is deliberate. The product is shaped by sitting with people
-                while their inbox fills up, not by guessing at it from a
-                different market — which is also why Bangla, English and the mix
-                of the two were in the first version rather than the fourth.
+                No stiff rules, no velvet rope, no minimum spend — just good
+                flavours and friendly faces. Walk in on a weekday and we will
+                seat you. Thursday to Sunday evening fills up, so book a table
+                and it is held for you.
               </p>
             </Reveal>
           </div>
@@ -330,6 +327,7 @@ export default function AboutPage() {
       <Story />
       <Beliefs />
       <Where />
+      <Faq />
     </>
   );
 }

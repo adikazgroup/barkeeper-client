@@ -13,18 +13,16 @@ const COLUMNS = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "/features" },
-      { label: "How it works", href: "/how-it-works" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Changelog", href: "#" },
+      { label: "Menu", href: "/menu" },
+      { label: "Promotions", href: "/promotions" },
+      { label: "FAQ", href: "/faq" },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "About", href: "/about" },
-      { label: "Blog", href: "#" },
-      { label: "Careers", href: "#" },
+      { label: "Blog", href: "/blog" },
       { label: "Contact", href: "/contact" },
     ],
   },

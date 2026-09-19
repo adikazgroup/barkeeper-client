@@ -4,6 +4,7 @@ export { Faq } from "./Faq";
 export { Hero } from "./Hero";
 export { HeroView } from "./HeroView";
 export { HeroBackdrop } from "./HeroBackdrop";
+export { HowItWorks } from "./HowItWorks";
 export { Logo } from "./Logo";
 export { PopularDishes } from "./PopularDishes";
 export { PopularDishesGrid } from "./PopularDishesGrid";

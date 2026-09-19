@@ -28,13 +28,10 @@ export function ServiceStrip() {
   return (
     <section className="border-t border-border/50">
       <div className="mx-auto max-w-7xl">
-        <div className="border-x border-border/50 bg-card/20">
+        <div className="border-x border-border/50 ">
           <Reveal
             as="ul"
             y={12}
-            // The dividers are drawn per item rather than with `divide-x`: at
-            // two columns the rule belongs between the pair, and `divide-x`
-            // would also draw one down the left of every second row.
             className="grid grid-cols-2 px-5 sm:px-8 lg:grid-cols-4"
           >
             {SERVICE_FACTS.map((fact, index) => {

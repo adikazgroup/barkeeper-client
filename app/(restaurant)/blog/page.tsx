@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+
 import { getCategoryTree } from "@/lib/categories";
 import { BlogHero } from "./_components/BlogHero";
 import { BlogContent } from "./_components/BlogContent";
+import { BlogCount, BlogCountSkeleton } from "./_components/BlogCount";
 import BlogFilter from "./_components/BlogFilter";
 import { BlogSkeleton } from "./_components/BlogSkeleton";
 
+/** Horizontal padding lives on each row so the rules can reach the frame. */
+const CELL = "px-5 sm:px-8";
+
 export const metadata: Metadata = {
-  title: "Duffy’s Burger & Wings Blog | Food Stories, Tips & News",
+  title: "Journal | Barkeeper’s",
   description:
-    "Read the latest from Duffy’s Burger & Wings — mouth-watering food blogs, menu tips, new recipes, and stories behind your favorite burgers and wings.",
+    "Notes from behind the counter at Barkeeper’s — how the food gets made, who makes it, and what we learned getting it right.",
 };
 
 export default async function BlogPage({
@@ -23,37 +28,50 @@ export default async function BlogPage({
   const category = (params?.category as string) ?? "";
   const search = (params?.search as string) ?? "";
 
-  // The rail is drawn from the live category tree rather than a hand-kept
-  // list, so a desk the admin adds appears here without a deploy. Only the
-  // categories that actually have posts filed under them are offered — a
-  // filter that can only ever return nothing is worse than no filter.
-  //
-  // `totalBlogs` is only trustworthy while every post still points at a
-  // category that exists. When a re-seed leaves posts filed under ids that
-  // have since been deleted, every count reads zero — and a rail holding
-  // nothing but "All" looks broken. Fall back to the whole tree there.
+
   const tree = await getCategoryTree();
   const filed = tree.filter((node) => node.totalBlogs > 0);
   const categories = filed.length > 0 ? filed : tree;
 
+  const query = { searchTerm: search, category, page };
+
   return (
-    <>
+    <main>
       <BlogHero />
 
-      <BlogFilter
-        searchTerm={search}
-        category={category}
-        categories={categories}
-      />
+      {/* The toolbar. It rides above the grid and sticks under the bar, and
+          it lives outside the Suspense boundary below so typing a search
+          swaps only the stories — the field the reader is using keeps its
+          place and its focus. */}
+      <section className="sticky top-16 z-40 border-b border-border/50 bg-background/90 backdrop-blur-md">
+        <div className="mx-auto max-w-7xl border-x border-border/50">
+          <div
+            className={`flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between ${CELL}`}
+          >
+            {/* Keyed with the grid so both go quiet on the same query. */}
+            <Suspense
+              key={`count-${category}-${search}-${page}`}
+              fallback={<BlogCountSkeleton />}
+            >
+              <BlogCount {...query} />
+            </Suspense>
 
-      {/* Keyed on the query so a new search swaps in the skeleton rather than
-          leaving the previous page's results on screen while it loads. */}
+            <BlogFilter
+              searchTerm={search}
+              category={category}
+              categories={categories}
+            />
+          </div>
+        </div>
+      </section>
+
+
       <Suspense
         key={`${category}-${search}-${page}`}
         fallback={<BlogSkeleton />}
       >
-        <BlogContent searchTerm={search} category={category} page={page} />
+        <BlogContent {...query} />
       </Suspense>
-    </>
+    </main>
   );
 }

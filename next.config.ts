@@ -34,6 +34,7 @@ const MEDIA_HOSTS = [
   "red-chili.s3.ap-southeast-1.amazonaws.com",
   "duffy-restaurant.s3.us-east-1.amazonaws.com",
   "duffy-media.s3.amazonaws.com",
+  "barkeepers-restaurant.s3.us-east-1.amazonaws.com",
 ] as const;
 
 // script-src/style-src need 'unsafe-inline': the theme-flash script in

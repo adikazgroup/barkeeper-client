@@ -1,4 +1,5 @@
 import type { ApiImage, CategoryRef } from "@/lib/types";
+import { COMPANY } from "@/lib/dummyData";
 
 /** The fields every blog carries, whichever endpoint it came from. */
 interface BlogBase {
@@ -87,7 +88,7 @@ export function toBlogPost(blog: Blog): BlogPost {
       day: "numeric",
       year: "numeric",
     }),
-    author: "Duffy’s",
+    author: COMPANY.name,
     slug: blog.slug || "",
   };
 }

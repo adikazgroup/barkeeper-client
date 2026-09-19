@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 
 import { SearchIcon, XIcon } from "@/components/icons/Icons";
+import { SimpleSelect } from "@/components/ui";
 import useUpdateSearchParam from "@/hooks/useUpdateSearchParam";
 import type { CategoryNode } from "@/lib/types";
 
 interface BlogFilterProps {
   category?: string;
   searchTerm?: string;
-  /** The desks that actually have posts, from `GET /categories`. */
+  /** The desks stories can be filed under, from `GET /categories`. */
   categories: CategoryNode[];
 }
 
@@ -20,12 +21,9 @@ export default function BlogFilter({
 }: BlogFilterProps) {
   const updateSearchParam = useUpdateSearchParam();
 
-  // The input is typed into locally and pushed to the URL on a pause, so the
-  // server component is not re-run on every keystroke.
+
   const [search, setSearch] = useState(searchTerm ?? "");
 
-  // Re-sync during render (not in an effect) when the URL changes from
-  // outside — a category click, the back button, a shared link.
   const [prevSearchTerm, setPrevSearchTerm] = useState(searchTerm);
   if (searchTerm !== prevSearchTerm) {
     setPrevSearchTerm(searchTerm);
@@ -40,73 +38,64 @@ export default function BlogFilter({
 
   const active = category ?? "";
 
-  // "All" is not a category the API knows about — it is the absence of the
-  // filter, so it carries an empty slug.
-  const desks = [{ _id: "all", name: "All", slug: "" }, ...categories];
+  // "All stories" is not a category the API knows about — it is the absence
+  // of the filter, so it carries an empty slug.
+  const options = [
+    { value: "", label: "All stories" },
+    ...categories.map((c) => ({ value: c.slug, label: c.name })),
+  ];
+
+  // Nothing to clear when nothing is set, and a permanently visible Clear
+  // button reads as a filter that is always on.
+  const isFiltered = Boolean(active || search);
 
   return (
-    <div className="sticky top-16 z-40 border-y border-primary/12 bg-background/90 backdrop-blur-md lg:top-18">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 lg:flex-row lg:items-center lg:gap-6 lg:px-8">
-        {/* Desks, as a rail — the whole set is visible, no dropdown to open. */}
-        <div className="relative min-w-0 flex-1">
-          <nav
-            aria-label="Filter by category"
-            className="flex items-center gap-1.5 overflow-x-auto pr-10 scrollbar-hide"
-          >
-            {desks.map((c) => {
-              const isActive = active === c.slug;
-
-              return (
-                <button
-                  key={c._id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() =>
-                    updateSearchParam({ category: c.slug, page: "" })
-                  }
-                  className={`h-10 shrink-0 cursor-pointer rounded-md border px-4 text-[11px] font-semibold tracking-[0.15em] uppercase transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isActive
-                      ? "border-primary bg-primary text-white"
-                      : "border-primary/20 text-(--rc-premium-muted) hover:border-primary/50 hover:text-primary dark:text-white/60"
-                  }`}
-                >
-                  {c.name}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* The rail scrolls, and a desk clipped mid-word looks like a bug
-              rather than an invitation. The fade says there is more. */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-background to-transparent"
-          />
-        </div>
-
-        {/* Search */}
-        <div className="relative w-full shrink-0 lg:w-72">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-primary" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search the journal…"
-            aria-label="Search the journal"
-            className="h-10 w-full rounded-md border border-primary/20 bg-card pr-10 pl-10 text-sm text-(--rc-premium-dark) transition-colors placeholder:text-(--rc-premium-muted)/60 focus:border-primary focus:outline-none dark:text-white dark:placeholder:text-white/40 [&::-webkit-search-cancel-button]:appearance-none"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              aria-label="Clear search"
-              className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-(--rc-premium-muted) transition-colors hover:bg-primary/10 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-white/50"
-            >
-              <XIcon className="size-3.5" />
-            </button>
-          )}
-        </div>
+    <div className="flex w-full items-center gap-2 sm:w-auto">
+      <div className="w-40 shrink-0 sm:w-44">
+        <SimpleSelect
+          options={options}
+          value={active}
+          onChange={(value) => updateSearchParam({ category: value, page: "" })}
+          placeholder="All stories"
+          className="h-9 rounded-lg bg-card/40 text-[13px] ring-border/70 backdrop-blur-sm"
+        />
       </div>
+
+      <div className="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground z-10" />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search the journal…"
+          aria-label="Search the journal"
+          className="h-9 w-full rounded-lg border border-border/70 bg-card/40 pr-8 pl-9 text-[13px] backdrop-blur-sm transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40 focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+            className="absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <XIcon className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      {isFiltered && (
+        <button
+          type="button"
+          // Pushed in one update rather than two, so the grid re-renders once
+          // and the URL never passes through a half-cleared state.
+          onClick={() =>
+            updateSearchParam({ category: "", search: "", page: "" })
+          }
+          className="h-9 shrink-0 cursor-pointer rounded-lg px-3 text-[12.5px] font-medium whitespace-nowrap text-muted-foreground transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          Clear
+        </button>
+      )}
     </div>
   );
 }

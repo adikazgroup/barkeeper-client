@@ -66,12 +66,12 @@ function Card({ promotion, alone }: { promotion: Promotion; alone: boolean }) {
           }}
         />
 
-        <div className={cn("relative block py-10 sm:py-12", CELL)}>
-          <h3 className="block max-w-[16ch] text-[26px] leading-[1.1] font-medium tracking-[-0.035em] text-white sm:text-[34px]">
+        <div className={cn("relative block py-10", CELL)}>
+          <h3 className="block  text-[26px] leading-[1.1] font-medium tracking-[-0.035em] text-white">
             {promotion.title}
           </h3>
 
-          <p className="mt-3.5 block max-w-[44ch] text-[14px] leading-[1.7] text-white/75">
+          <p className="mt-3.5 block max-w-[44ch] text-[14px]  text-white/75">
             {promotion.description}
           </p>
         </div>

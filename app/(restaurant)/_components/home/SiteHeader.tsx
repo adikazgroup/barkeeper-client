@@ -18,6 +18,7 @@ const NAV_LINKS = [
   // policy pages. A bare "#menu" only resolves on the home page.
   { label: "Home", href: "/" },
   { label: "Menu", href: "/menu" },
+  { label: "Blog", href: "/blog" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -127,17 +128,8 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
         scrolled ? "bg-background/30" : "bg-transparent",
       )}
     >
-      {/* The same ruled frame every section below is drawn in, so the two
-          uprights run the full height of the page instead of starting under
-          the bar. The auth screens already frame their header this way. */}
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between border-x border-border/50 px-5 sm:px-8">
-        {/* <Link
-          href="/"
-          className="shrink-0 rounded-full text-[19px] font-semibold tracking-[-0.02em] text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          Barkeeper&apos;s
-        </Link> */}
 
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between border-x border-border/50 px-5 sm:px-8">
         <Logo className="h-10 w-auto shrink-0" priority href="/" />
 
         <nav
@@ -195,7 +187,7 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
         </nav>
 
         {/* ----------------------------- ACTIONS ---------------------------- */}
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-3">
           <ThemeToggle className="rounded-full border-transparent bg-transparent hover:border-transparent" />
 
           <Link
@@ -228,10 +220,6 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
               className="flex size-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card text-[12px] font-semibold text-foreground transition-colors duration-200 hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {account?.avatarUrl ? (
-                // Unoptimized: the avatar comes off whatever host the backend
-                // stores it on, and `next.config.ts` declares no image hosts,
-                // so running it through the optimizer would throw on an
-                // unconfigured hostname.
                 <Image
                   src={account.avatarUrl}
                   alt=""
@@ -249,18 +237,13 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
           ) : (
             <Link
               href={AUTH_ROUTES.login}
-              className="hidden h-8 items-center rounded-full px-3 text-[13px] text-muted-foreground transition-colors duration-200 hover:text-foreground sm:inline-flex"
+              className="hidden h-8 items-center rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-opacity duration-200 hover:opacity-88 sm:inline-flex"
             >
               Sign in
             </Link>
           )}
 
-          <Link
-            href="/contact"
-            className="hidden h-8 items-center rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-opacity duration-200 hover:opacity-88 sm:inline-flex"
-          >
-            Book now
-          </Link>
+
 
           {/* Mobile trigger — the two rules cross into an X when open. */}
           <button

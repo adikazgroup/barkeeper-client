@@ -3,6 +3,7 @@ import {
   Categories,
   Faq,
   Hero,
+  HowItWorks,
   PopularDishes,
   Promotions,
   ServiceStrip,
@@ -27,6 +28,7 @@ export default function Home() {
         blurb="Every heading the kitchen prints, in the order it prints them."
       />
       <PopularDishes />
+      <HowItWorks />
       <Testimonials />
       <Faq />
     </main>
