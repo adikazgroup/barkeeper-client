@@ -15,15 +15,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-/**
- * The account is read here rather than asked for again on screen: the backend
- * wants a phone number once and then remembers it, so a customer who has
- * ordered before should find the field already filled.
- *
- * `proxy.ts` has checked for a cookie; this is the real gate, and it goes out
- * through the route that clears a dead one so the two do not bounce a customer
- * between them.
- */
+
 export default async function CheckoutPage() {
   const { account, reason } = await getAccountResult();
 

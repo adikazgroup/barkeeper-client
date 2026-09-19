@@ -1,12 +1,3 @@
-/**
- * The journal's header.
- *
- * Drawn in the same language as the menu and offers boards — the shared
- * backdrop, the pill badge, the gradient headline — so arriving here reads as
- * turning a page rather than landing on a different site. Pulled up under the
- * sticky bar exactly as those are, so the transparent header sits on the
- * hero's own art instead of on flat page background.
- */
 
 import { BeamBorder } from "../../_components/home/BeamBorder";
 import { HeroBackdrop } from "../../_components/home/HeroBackdrop";
@@ -15,11 +6,11 @@ export function BlogHero() {
   return (
     <section
       aria-labelledby="blog-hero-heading"
-      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+      className="relative -mt-16 overflow-hidden border-b border-border/50 "
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16">
+      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16 pt-28">
         <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
           <BeamBorder />
           <span

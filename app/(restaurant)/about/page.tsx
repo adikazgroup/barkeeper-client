@@ -85,7 +85,7 @@ function AboutHero() {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <h1 className="mt-7 max-w-[19ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[40px] leading-[1.03] font-medium tracking-[-0.045em] text-transparent sm:text-[58px]">
+            <h1 className="mt-7 max-w-[14ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[40px] leading-[1.03] font-medium tracking-[-0.045em] text-transparent sm:text-[58px]">
               A neighbourhood bar in Hill East
             </h1>
           </Reveal>

@@ -85,13 +85,13 @@ export async function generateMetadata({
       authors: [COMPANY.name],
       images: post.featuredImage?.url
         ? [
-            {
-              url: post.featuredImage.url,
-              width: 1200,
-              height: 630,
-              alt: post.featuredImage.alt || post.title,
-            },
-          ]
+          {
+            url: post.featuredImage.url,
+            width: 1200,
+            height: 630,
+            alt: post.featuredImage.alt || post.title,
+          },
+        ]
         : [],
     },
     twitter: {
@@ -127,13 +127,13 @@ export default async function BlogDetailPage({
   // for because this post is very likely one of them.
   const relatedRes = blog.category
     ? await getData<BlogListItem[]>(
-        `/blogs?${buildQueryParams({
-          page: 1,
-          limit: 4,
-          categoryId: blog.category._id,
-        })}`,
-        { tags: ["blogs"] },
-      )
+      `/blogs?${buildQueryParams({
+        page: 1,
+        limit: 4,
+        categoryId: blog.category._id,
+      })}`,
+      { tags: ["blogs"] },
+    )
     : null;
 
   const related = (relatedRes?.data ?? [])
@@ -147,12 +147,12 @@ export default async function BlogDetailPage({
       {/* ── The masthead ─────────────────────────────────────────────── */}
       <section
         aria-labelledby="post-heading"
-        className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+        className="relative -mt-16 overflow-hidden border-b border-border/50 "
       >
         <HeroBackdrop />
 
         <div
-          className={`relative mx-auto max-w-7xl border-x border-border/50 pb-12 text-center sm:pb-14 ${CELL}`}
+          className={`relative mx-auto max-w-7xl border-x border-border/50 pb-12 text-center sm:pb-14 ${CELL} pt-28`}
         >
           <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
             <BeamBorder />

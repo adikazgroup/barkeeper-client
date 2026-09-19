@@ -49,10 +49,10 @@ function FaqJsonLd() {
 
 function Hero() {
   return (
-    <section className="relative -mt-16 isolate overflow-hidden pt-16">
+    <section className="relative -mt-16 isolate overflow-hidden ">
       <HeroBackdrop />
 
-      <div className="mx-auto max-w-7xl border-x border-border/50">
+      <div className="mx-auto max-w-7xl border-x border-border/50 pt-16">
         <div
           className={`flex flex-col items-center pt-20 pb-16 text-center ${CELL}`}
         >

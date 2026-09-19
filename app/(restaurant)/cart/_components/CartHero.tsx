@@ -1,28 +1,16 @@
 import { BeamBorder } from "../../_components/home/BeamBorder";
 import { HeroBackdrop } from "../../_components/home/HeroBackdrop";
 
-/**
- * The docket's header.
- *
- * Drawn in the same language as the home page's hero and the board's — the
- * shared backdrop, the pill badge, the gradient headline, the page's own
- * border-x frame — so arriving at the cart reads as turning a page rather than
- * landing on a different site. It is pulled up under the sticky header exactly
- * as those two are, so the transparent bar sits on the hero's art instead of
- * on flat page background.
- *
- * `children` is the slot the page can hang a rail off, the way the menu hangs
- * its counter tabs here.
- */
+
 export function CartHero({ children }: { children?: React.ReactNode }) {
   return (
     <section
       aria-labelledby="cart-hero-heading"
-      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+      className="relative -mt-16 overflow-hidden border-b border-border/50 "
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16">
+      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16 pt-28">
         <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
           <BeamBorder />
           <span

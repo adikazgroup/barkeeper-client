@@ -1,22 +1,16 @@
 import { BeamBorder } from "../../_components/home/BeamBorder";
 import { HeroBackdrop } from "../../_components/home/HeroBackdrop";
 
-/**
- * The checkout's header.
- *
- * The cart's hero with the last step's words on it — same backdrop, same pill,
- * same frame — so the step between the docket and the payment screen does not
- * look like a different site.
- */
+
 export function CheckoutHero() {
   return (
     <section
       aria-labelledby="checkout-hero-heading"
-      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+      className="relative -mt-16 overflow-hidden border-b border-border/50"
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16">
+      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16  pt-28">
         <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
           <BeamBorder />
           <span

@@ -19,11 +19,11 @@ export function MenuHero({ children }: { children?: React.ReactNode }) {
   return (
     <section
       aria-labelledby="menu-hero-heading"
-      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+      className="relative -mt-16 overflow-hidden border-b border-border/50 "
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16">
+      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-14 text-center sm:px-8 sm:pb-16 pt-28">
         <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
           <BeamBorder />
           <span

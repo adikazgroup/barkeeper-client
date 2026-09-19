@@ -25,20 +25,7 @@ const CELL = "px-5 sm:px-8";
 /** What a tip usually is, and the way out of the three. */
 const TIP_PRESETS = [0, 10, 15, 20];
 
-/**
- * The last screen before Stripe.
- *
- * Four things decide the price — the pickup time, the tip, the code and the
- * docket itself — and the kitchen is the only side that can put them together.
- * So nothing here adds anything up: every change re-asks `/orders/quote`, which
- * prices the cart exactly as placing it would and creates nothing, and the
- * summary prints what came back. When the customer commits, the very same body
- * goes to `/orders`, which is what makes the figure they agreed to the figure
- * they are charged.
- *
- * Drawn in the cart's frame — lines on the left, total on the right, one rule
- * between — because this is the same docket one step further on.
- */
+
 export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const router = useRouter();
 
@@ -159,7 +146,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
     if (!quote.isOrderable) {
       toast.error(
         quote.issues[0]?.message ??
-          "Something on the docket cannot be ordered yet.",
+        "Something on the docket cannot be ordered yet.",
       );
       return;
     }
