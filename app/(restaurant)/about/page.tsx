@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { COMPANY } from "@/lib/dummyData";
 import { ChevronRightIcon } from "@/components/icons/Icons";
-import { ClosingCta, Faq, HeroBackdrop } from "../_components/home";
+import { Faq, HeroBackdrop } from "../_components/home";
 import { BeamBorder } from "../_components/home/BeamBorder";
 import { Reveal } from "../_components/home/Reveal";
 

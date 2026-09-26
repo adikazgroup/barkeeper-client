@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Info } from "lucide-react";
@@ -42,11 +42,12 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
   // Tapping a second card on the home board changes the query without
   // remounting this component, so the counter follows the URL when it moves
   // rather than only when it is first read.
-  useEffect(() => {
-    if (!requested) return;
+  const [seenRequested, setSeenRequested] = useState(requested);
+  if (requested !== seenRequested) {
+    setSeenRequested(requested);
     const match = groups.find((group) => group.slug === requested);
     if (match) setActiveKey(match.key);
-  }, [requested, groups]);
+  }
 
   const active = groups.find((group) => group.key === activeKey) ?? groups[0];
   const panelId = `${active.slug}-panel`;
