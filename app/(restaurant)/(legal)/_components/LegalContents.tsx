@@ -83,7 +83,7 @@ export function LegalContents({
               href={`#${section.id}`}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "group relative -mx-2 flex gap-2.5 rounded-md px-2 py-1.5 text-[12.5px] leading-normal transition-colors duration-200",
+                "group relative -mx-2 flex gap-2.5 rounded-md px-2 py-2 text-[13.5px] leading-normal transition-colors duration-200 lg:py-1.5 lg:text-[12.5px]",
                 isActive
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",

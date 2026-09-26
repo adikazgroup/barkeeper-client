@@ -133,7 +133,7 @@ export function OrdersView() {
         <div
           role="tablist"
           aria-label="Filter orders by status"
-          className="scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
+          className="noBar flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
         >
           {FILTERS.map((entry) => (
             <button
@@ -223,7 +223,7 @@ export function OrdersView() {
                 Newer
               </Pager>
 
-              <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
+              <p className="font-mono text-[10px] tracking-[0.12em] whitespace-nowrap text-muted-foreground uppercase sm:text-[10.5px] sm:tracking-[0.16em]">
                 Page {page} of {totalPages}
               </p>
 
@@ -396,14 +396,17 @@ function OrderRow({
           rather than stopping at the text. */}
       <div
         className={cn(
-          "flex items-center gap-2 border-t border-border/50 bg-card/20 py-4",
+          "flex flex-wrap items-center gap-2 border-t border-border/50 bg-card/20 py-4",
           CELL,
         )}
       >
         {order.items.slice(0, 4).map((item, index) => (
           <div
             key={`${order._id}-thumb-${index}`}
-            className="size-12 shrink-0 rounded-xl border border-border/60 bg-card p-1"
+            className={cn(
+              "size-11 shrink-0 rounded-xl border border-border/60 bg-card p-1 sm:size-12",
+              index === 3 && "hidden sm:block",
+            )}
           >
             <div className="relative size-full overflow-hidden rounded-lg bg-muted">
               <SafeImage
@@ -418,18 +421,23 @@ function OrderRow({
           </div>
         ))}
 
+        {order.items.length > 3 && (
+          <span className="font-mono text-[11px] text-muted-foreground tabular-nums sm:hidden">
+            +{order.items.length - 3}
+          </span>
+        )}
         {order.items.length > 4 && (
-          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+          <span className="hidden font-mono text-[11px] text-muted-foreground tabular-nums sm:inline">
             +{order.items.length - 4}
           </span>
         )}
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        <div className="mt-2 grid w-full grid-cols-2 gap-2 sm:mt-0 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
             aria-expanded={open}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card/60 px-3.5 py-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border bg-card/60 px-3.5 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {open ? "Hide details" : "See details"}
             <ChevronDownIcon
@@ -448,14 +456,14 @@ function OrderRow({
               type="button"
               onClick={() => void handlePay()}
               disabled={busy}
-              className="inline-flex h-9 cursor-pointer items-center rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy ? "One moment…" : "Pay now"}
             </button>
           ) : meta.live ? (
             <Link
               href={`/profile/orders/${order._id}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Receipt className="size-3.5" />
               Track order
@@ -465,7 +473,7 @@ function OrderRow({
               type="button"
               onClick={() => void handleReorder()}
               disabled={busy}
-              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-card/60 px-4 text-[13px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy && (
                 <Loader2 aria-hidden className="size-3.5 animate-spin" />
@@ -520,12 +528,12 @@ function OrderRow({
               orders that can have one, and only while the row is open. */}
           {order.status === "completed" && <OrderReview orderId={order._id} />}
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
             <button
               type="button"
               onClick={() => void handleReorder()}
               disabled={busy}
-              className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-card/60 px-3 text-[13.5px] font-medium whitespace-nowrap backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:text-[14px]"
             >
               {busy && <Loader2 aria-hidden className="size-4 animate-spin" />}
               Order this again
@@ -533,7 +541,7 @@ function OrderRow({
 
             <Link
               href={`/profile/orders/${order._id}`}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-card/60 px-3 text-[13.5px] font-medium whitespace-nowrap backdrop-blur-sm sm:px-5 sm:text-[14px] transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Receipt className="size-4" />
               Full receipt
@@ -544,7 +552,7 @@ function OrderRow({
                 type="button"
                 onClick={() => void handleCancel()}
                 disabled={busy}
-                className="inline-flex h-11 cursor-pointer items-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="col-span-2 inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>

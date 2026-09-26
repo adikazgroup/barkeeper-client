@@ -29,7 +29,7 @@ export function Faq() {
     <section id="faq" className="border-t border-border/50">
       <div className="mx-auto max-w-7xl">
         <div className="border-x border-border/50">
-          <Reveal className="flex items-center justify-between gap-5 border-b border-border/50 px-5 py-10 sm:px-8">
+          <Reveal className="flex flex-wrap items-center justify-between gap-5 border-b border-border/50 px-5 py-10 sm:px-8">
             <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
               Questions, before you ask them
             </h2>
@@ -41,8 +41,7 @@ export function Faq() {
 
           <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
             {/* left — the way out, pinned ------------------------------- */}
-            <div className="relative isolate overflow-hidden border-b border-border/50 lg:border-b-0 lg:border-r">
-
+            <div className="relative isolate order-last overflow-hidden border-t border-border/50 lg:order-none lg:border-t-0 lg:border-r">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 -z-10 opacity-[0.10] grayscale dark:opacity-[0.07]"
@@ -62,15 +61,20 @@ export function Faq() {
                 />
               </div>
 
-              <Reveal className={cn("py-9 lg:sticky lg:top-24", CELL)}>
+              <Reveal
+                className={cn(
+                  "py-10 sm:py-12 lg:sticky lg:top-24 lg:py-9",
+                  CELL,
+                )}
+              >
                 <p className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
                   Still unsure?
                 </p>
-                <p className="mt-4 max-w-[24ch] text-[21px] font-medium leading-[1.35] tracking-[-0.02em]">
+                <p className="mt-3 max-w-[24ch] text-[20px] leading-[1.3] font-medium tracking-[-0.02em] text-balance sm:text-[22px] lg:text-[21px]">
                   Ask us anything — a person answers, usually the same day.
                 </p>
 
-                <p className="mt-4 max-w-[42ch] text-[12.5px] leading-[1.7] text-muted-foreground">
+                <p className="mt-3 max-w-[42ch] text-[13px] leading-[1.7] text-pretty text-muted-foreground lg:text-[12.5px]">
                   Or start free and connect one channel first — no card, and
                   nothing installed on your site.
                 </p>
@@ -78,7 +82,7 @@ export function Faq() {
                 {/* Last, so the column reads statement → caveat → action. */}
                 <Link
                   href="/contact"
-                  className="mt-7 inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-primary/30 hover:text-primary"
+                  className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-lg sm:inline-flex sm:h-10 sm:w-auto sm:justify-start lg:mt-7 border border-border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-primary/30 hover:text-primary"
                 >
                   Write to us
                   <svg

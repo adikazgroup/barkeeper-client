@@ -34,7 +34,7 @@ export default function BlogCard({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col sm:p-5 px-3 py-5 pb-4">
         <div className="flex items-center gap-2.5 font-mono text-[10.5px] tracking-[0.14em] text-muted-foreground uppercase">
           {index !== undefined && (
             <span className="tabular-nums text-primary/70">

@@ -92,8 +92,12 @@ export function SiteFooter() {
         <div className="border-x border-border/50">
           <div className="grid lg:grid-cols-[1.3fr_2fr]">
             <div className={`py-14 lg:border-r lg:border-border/50 ${CELL}`}>
-              <Link href="/" className="flex items-center gap-2.5">
-                <Logo className="h-6 w-auto" />
+              <Link
+                href="/"
+                aria-label="Barkeeper's home"
+                className="inline-flex items-center"
+              >
+                <Logo className="h-10 w-auto sm:h-11" />
               </Link>
               <p className="mt-4 max-w-[36ch] text-[13.5px] leading-[1.7] text-muted-foreground">
                 The layer between your social channels and your store, so no
@@ -148,13 +152,24 @@ export function SiteFooter() {
 
           {/* The legal line closes the frame: its rule runs the full width. */}
           <div
-            className={`flex flex-col gap-2 border-t border-border/50 py-6 sm:flex-row sm:items-center sm:justify-between ${CELL}`}
+            className={`flex flex-col gap-2 border-t border-border/50 py-6 lg:flex-row lg:items-center lg:justify-between lg:gap-6 ${CELL}`}
           >
             <p className="text-[12.5px] text-muted-foreground">
               © {new Date().getFullYear()} {COMPANY.legalName}
             </p>
             <p className="text-[12.5px] text-muted-foreground">
               {COMPANY.address.full}
+            </p>
+            <p className="text-[12.5px] text-muted-foreground">
+              Crafted by{" "}
+              <a
+                href="https://adikaz.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors duration-200 hover:text-primary hover:decoration-primary"
+              >
+                Adikaz Consortium Limited
+              </a>
             </p>
           </div>
         </div>

@@ -30,9 +30,24 @@ const FAN = [
     lift: 42,
     at: "hidden md:block",
   },
-  { width: "w-32 sm:w-44 lg:w-48 xl:w-56", rotate: -6, lift: 14, at: "" },
-  { width: "w-40 sm:w-56 lg:w-60 xl:w-68", rotate: 0, lift: -14, at: "" },
-  { width: "w-32 sm:w-44 lg:w-48 xl:w-56", rotate: 6, lift: 14, at: "" },
+  {
+    width: "w-[30vw] max-w-44 sm:w-44 sm:max-w-none lg:w-48 xl:w-56",
+    rotate: -6,
+    lift: 14,
+    at: "",
+  },
+  {
+    width: "w-[58vw] max-w-72 sm:w-56 sm:max-w-none lg:w-60 xl:w-68",
+    rotate: 0,
+    lift: -14,
+    at: "",
+  },
+  {
+    width: "w-[30vw] max-w-44 sm:w-44 sm:max-w-none lg:w-48 xl:w-56",
+    rotate: 6,
+    lift: 14,
+    at: "",
+  },
   {
     width: "w-28 sm:w-36 lg:w-40 xl:w-48",
     rotate: 13,
@@ -95,7 +110,7 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
     // the backdrop would otherwise start below it — leaving the bar sitting on
     // flat page background instead of on the hero's own art. This slides the
     // section up under the transparent bar without moving a pixel of content.
-    <section className="relative -mt-16 overflow-hidden pt-28 pb-16">
+    <section className="relative -mt-16 overflow-hidden pt-24 pb-14 sm:pt-28 sm:pb-16">
       <HeroBackdrop />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
@@ -135,14 +150,18 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
           an empty fan would only leave a hole under them. */}
       {dishes.length > 0 && (
         <div className="relative mx-auto max-w-[110rem] px-5 sm:px-8">
-          <div className="flex items-center justify-center -space-x-7 pt-14 sm:-space-x-11 lg:-space-x-12 xl:-space-x-14">
+          <div className="flex items-center justify-center pt-10 sm:pt-14">
             {seats.map(({ seat, seatIndex, dish }) => {
               const depth = Math.abs(CENTRE - seatIndex);
 
               return (
                 <span
                   key={dish?.id ?? `seat-${seatIndex}`}
-                  className={cn("block shrink-0", seat.width, seat.at)}
+                  className={cn(
+                    "block shrink-0 -mx-5 sm:-mx-5.5 lg:-mx-6 xl:-mx-7",
+                    seat.width,
+                    seat.at,
+                  )}
                   style={{
                     transform: `translateY(${seat.lift}px) rotate(${seat.rotate}deg)`,
                     zIndex: FAN.length - depth,
@@ -160,7 +179,7 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
                         src={dish?.src}
                         alt={dish?.name ?? ""}
                         fill
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 26vw, 20vw"
+                        sizes="(max-width: 640px) 58vw, (max-width: 1024px) 26vw, 20vw"
                         priority={seatIndex === CENTRE}
                         fallbackClassName="absolute inset-0 flex items-center justify-center text-muted-foreground"
                         style={{
@@ -194,7 +213,7 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
           </div>
 
           {middle && (
-            <p className="ani2 mx-auto mt-10 flex w-fit items-center gap-2.5 rounded-full border border-border bg-card py-1.5 pr-4 pl-1.5 shadow-lg">
+            <p className="ani2 mx-auto mt-5 flex max-w-full sm:mt-10 w-fit items-center gap-2.5 rounded-full border border-border bg-card py-1.5 pr-4 pl-1.5 shadow-lg">
               {/* Too small for the fallback mark, so an unphotographed plate
                   leaves the disc plain rather than cramming an icon into it. */}
               <span className="relative block size-8 shrink-0 overflow-hidden rounded-full bg-muted">

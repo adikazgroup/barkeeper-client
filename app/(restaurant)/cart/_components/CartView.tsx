@@ -36,7 +36,6 @@ const MENU_HREF = "/menu";
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-
 export function CartView() {
   const router = useRouter();
 
@@ -54,7 +53,6 @@ export function CartView() {
     clear,
   } = useCart();
 
-
   const { applied, discount } = useCoupon();
   const total = Math.max(0, subtotal - discount);
   const [busy, setBusy] = useState<string | null>(null);
@@ -62,7 +60,6 @@ export function CartView() {
   if (!hydrated) return <CartSkeleton />;
   if (signedOut) return <SignedOutCart />;
   if (items.length === 0) return <EmptyCart />;
-
 
   const run = async (
     key: string,
@@ -110,7 +107,7 @@ export function CartView() {
     if (!isOrderable) {
       toast.error(
         issues[0]?.message ??
-        "Something on the docket is unavailable. Check the lines above.",
+          "Something on the docket is unavailable. Check the lines above.",
       );
       return;
     }
@@ -174,6 +171,30 @@ export function CartView() {
                 ))}
               </motion.ul>
 
+              {/* Keeps the total and the way on in reach while a long docket
+                  scrolls; it comes to rest above the full summary. */}
+              <div className="sticky bottom-0 z-20 flex items-center justify-between gap-4 border-t border-border/50 bg-background/85 px-5 py-3 backdrop-blur-md sm:px-8 lg:hidden">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                    Total
+                  </p>
+                  <p className="font-mono text-[18px] tracking-[-0.02em] text-primary tabular-nums">
+                    {formatMoney(total)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={pending || !isOrderable}
+                  className="group inline-flex h-11 shrink-0 cursor-pointer items-center gap-3 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Checkout
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground">
+                    <ChevronRightIcon className="size-4" />
+                  </span>
+                </button>
+              </div>
+
               <div className={cn("border-t border-border/50 py-7", CELL)}>
                 <Link
                   href={MENU_HREF}
@@ -236,7 +257,6 @@ export function CartView() {
                 </dl>
 
                 <CouponField />
-
 
                 {issues.length > 0 && (
                   <ul
@@ -334,7 +354,7 @@ function CartRow({
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="truncate text-[16px] leading-tight font-semibold tracking-[-0.02em]">
+            <h3 className="line-clamp-2 text-[15px] leading-tight font-semibold tracking-[-0.02em] sm:text-[16px]">
               {line.name}
             </h3>
 
@@ -403,7 +423,7 @@ function CartRow({
             disabled={pending}
             aria-busy={removing}
             aria-label={`Remove ${line.name} from cart`}
-            className="shrink-0 cursor-pointer rounded-full border border-transparent p-1.5 text-muted-foreground transition-colors duration-200 hover:border-border hover:bg-card hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="-mt-1 -mr-1.5 shrink-0 cursor-pointer rounded-full border border-transparent p-2 text-muted-foreground sm:mt-0 sm:mr-0 sm:p-1.5 transition-colors duration-200 hover:border-border hover:bg-card hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             {removing ? (
               <Loader2 aria-hidden className="size-4 animate-spin" />
@@ -424,7 +444,7 @@ function CartRow({
                   ? `Remove ${line.name} from cart`
                   : `Decrease quantity of ${line.name}`
               }
-              className="cursor-pointer rounded-l-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+              className="grid size-9 cursor-pointer place-items-center rounded-l-full transition sm:size-auto sm:px-2.5 sm:py-1.5-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MinusIcon className="size-3.5" />
             </button>
@@ -446,7 +466,7 @@ function CartRow({
               onClick={() => onQuantity(line, line.quantity + 1)}
               disabled={pending}
               aria-label={`Increase quantity of ${line.name}`}
-              className="cursor-pointer rounded-r-full px-2.5 py-1.5 transition-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+              className="grid size-9 cursor-pointer place-items-center rounded-r-full transition sm:size-auto sm:px-2.5 sm:py-1.5-colors duration-200 hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <PlusIcon className="size-3.5" />
             </button>

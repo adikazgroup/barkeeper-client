@@ -32,7 +32,7 @@ export function ServiceStrip() {
           <Reveal
             as="ul"
             y={12}
-            className="grid grid-cols-2 px-5 sm:px-8 lg:grid-cols-4"
+            className="grid grid-cols-2 lg:grid-cols-4 lg:px-8"
           >
             {SERVICE_FACTS.map((fact, index) => {
               const Icon = FACT_ICONS[fact.icon];
@@ -41,9 +41,12 @@ export function ServiceStrip() {
                 <li
                   key={fact.id}
                   className={cn(
-                    "flex items-center gap-3 py-5",
-                    index % 2 === 1 && "border-l border-border/50 pl-5",
-                    "lg:border-l lg:border-border/50 lg:pl-6 lg:first:border-l-0 lg:first:pl-0",
+                    "flex min-w-0 items-center gap-3 py-5",
+                    index % 2 === 0
+                      ? "px-5 sm:px-8"
+                      : "border-l border-border/50 pr-5 pl-5 sm:pr-8",
+                    index >= 2 && "border-t border-border/50 lg:border-t-0",
+                    "lg:border-l lg:border-border/50 lg:pr-0 lg:pl-6 lg:first:border-l-0 lg:first:pl-0",
                   )}
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-background text-muted-foreground">

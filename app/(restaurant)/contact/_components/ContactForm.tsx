@@ -62,9 +62,9 @@ export function ContactForm() {
   return (
     <div
       id="message"
-      className="h-full scroll-mt-24 rounded-2xl border border-border/60 bg-card/30 p-6 sm:p-9"
+      className="h-full scroll-mt-24 sm:rounded-2xl sm:border sm:border-border/60 sm:bg-card/30 sm:p-9"
     >
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <h2 className="text-[26px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[34px]">
           Send word
         </h2>
@@ -126,15 +126,15 @@ export function ContactForm() {
             type="submit"
             disabled={loading}
             aria-busy={loading}
-            className="group inline-flex h-11 w-full shrink-0 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
+            className="group relative inline-flex h-11 w-full shrink-0 items-center justify-center gap-4 sm:justify-between rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
           >
             {loading ? "Sending…" : "Send message"}
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
+            <span className="absolute right-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5 sm:static">
               <Send aria-hidden className="size-4" />
             </span>
           </button>
 
-          <p className="text-[12.5px] leading-[1.7] text-muted-foreground">
+          <p className="self-center text-[12.5px] leading-[1.7] text-muted-foreground sm:self-auto">
             We usually reply the same day.
           </p>
         </div>

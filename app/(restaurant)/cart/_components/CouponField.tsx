@@ -25,7 +25,6 @@ export function CouponField() {
     });
   };
 
-
   const wallet = myCoupons.filter((coupon) => coupon.code !== applied?.code);
 
   return (

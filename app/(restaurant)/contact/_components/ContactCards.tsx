@@ -22,7 +22,7 @@ export function ContactCards() {
     <div className="flex h-full flex-col">
       <p className={LABEL}>Straight to us</p>
 
-      <ul role="list" className="mt-5 space-y-3">
+      <ul role="list" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
         {cards.map((item) => {
           const external = item.link.startsWith("http");
 
@@ -33,7 +33,7 @@ export function ContactCards() {
                 target={external ? "_blank" : undefined}
                 rel={external ? "noopener noreferrer" : undefined}
                 className={cn(
-                  "group flex items-start justify-between gap-4 rounded-lg border border-border/60 bg-card/30 p-5",
+                  "group flex items-start justify-between gap-4 h-full rounded-lg border border-border/60 bg-card/30 p-4 sm:p-5",
                   "transition-[border-color,background-color] duration-300 ease-out",
                   "hover:border-primary/30 hover:bg-card",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -62,7 +62,7 @@ export function ContactCards() {
         })}
       </ul>
 
-      <p className={cn("mt-10", LABEL)}>Or message us</p>
+      <p className={cn("mt-8 sm:mt-10", LABEL)}>Or message us</p>
 
       <ul role="list" className="mt-4 flex items-center gap-2.5">
         {socials.map(({ Icon, label, href }) => (
@@ -78,7 +78,7 @@ export function ContactCards() {
         ))}
       </ul>
 
-      <p className="mt-8 max-w-[34ch] text-[13px] leading-[1.7] text-muted-foreground">
+      <p className="mt-6 max-w-[34ch] sm:mt-8 text-[13px] leading-[1.7] text-muted-foreground">
         For a table tonight, ring us — the phone is quicker than the post.
       </p>
     </div>

@@ -7,7 +7,7 @@ import { AuthProvider } from "@/components/providers";
 import { SESSION_ENDED_ROUTE } from "@/lib/auth/constants";
 
 import { ProfileHero } from "./_components/ProfileHero";
-import { ProfileNav } from "./_components/ProfileNav";
+import { MobileSignOut, ProfileNav } from "./_components/ProfileNav";
 
 export const metadata: Metadata = {
   title: "Your Account | Barkeeper’s",
@@ -69,7 +69,10 @@ export default async function ProfileLayout({
           <div className="border-x border-border/50">
             <div className="grid lg:grid-cols-[19rem_minmax(0,1fr)]">
               <ProfileNav />
-              <div className="min-w-0">{children}</div>
+              <div className="min-w-0">
+                {children}
+                <MobileSignOut />
+              </div>
             </div>
           </div>
         </div>

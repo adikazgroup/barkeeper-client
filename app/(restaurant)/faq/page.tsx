@@ -54,10 +54,10 @@ function Hero() {
 
       <div className="mx-auto max-w-7xl border-x border-border/50 pt-16">
         <div
-          className={`flex flex-col items-center pt-20 pb-16 text-center ${CELL}`}
+          className={`flex flex-col items-center pt-10 pb-12 text-center sm:pt-16 sm:pb-16 lg:pt-20 ${CELL}`}
         >
           <Reveal>
-            <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm">
+            <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-3.5 pl-2.5 font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase backdrop-blur-sm sm:text-[10.5px] sm:tracking-[0.16em]">
               <BeamBorder />
               <span className="relative flex size-1.5 shrink-0">
                 <span className="relative size-1.5 rounded-full bg-primary" />
@@ -67,13 +67,13 @@ function Hero() {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <h1 className="mt-7 max-w-[18ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[40px] leading-[1.03] font-medium tracking-[-0.045em] text-transparent sm:text-[58px]">
+            <h1 className="mt-6 max-w-[18ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[34px] leading-[1.06] font-medium tracking-[-0.04em] text-balance text-transparent sm:mt-7 sm:text-[58px] sm:leading-[1.03] sm:tracking-[-0.045em]">
               Questions, before you ask them
             </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
-            <p className="mt-7 max-w-[54ch] text-[15px] leading-[1.7] text-muted-foreground sm:text-[16.5px]">
+            <p className="mt-4 max-w-[54ch] text-[15px] leading-[1.7] text-pretty text-muted-foreground sm:mt-7 sm:text-[16.5px]">
               Setup, languages, what the agent will and will not say, which
               stores it writes to, how billing works, and what happens to your
               customers&rsquo; messages. If yours is not here, a person will
@@ -104,17 +104,19 @@ function Questions() {
             aria-label="Question categories"
             className="border-b border-border/50 lg:border-r lg:border-b-0"
           >
-            <div className={`py-10 lg:sticky lg:top-16 lg:py-9 ${CELL}`}>
+            <div
+              className={`py-8 sm:py-10 lg:sticky lg:top-16 lg:py-9 ${CELL}`}
+            >
               <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
                 Jump to
               </p>
 
-              <ol className="mt-5 space-y-1">
+              <ol className="mt-4 space-y-1 lg:mt-5">
                 {FAQ_CATEGORIES.map((category, index) => (
                   <li key={category.id}>
                     <a
                       href={`#${category.id}`}
-                      className="group -mx-2 flex items-baseline gap-2.5 rounded-md px-2 py-1.5 text-[12.5px] leading-normal text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+                      className="group -mx-2 flex items-baseline gap-2.5 rounded-md px-2 py-2 text-[13.5px] leading-normal text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground lg:py-1.5 lg:text-[12.5px]"
                     >
                       <span className="font-mono tabular-nums opacity-40 transition-opacity duration-200 group-hover:opacity-100">
                         {String(index + 1).padStart(2, "0")}
@@ -128,12 +130,12 @@ function Questions() {
                 ))}
               </ol>
 
-              <p className="mt-8 border-t border-border/50 pt-6 max-w-[28ch] text-[12.5px] leading-[1.7] text-muted-foreground">
+              <p className="mt-8 hidden max-w-[28ch] border-t border-border/50 pt-6 text-[12.5px] lg:block leading-[1.7] text-muted-foreground">
                 Still unsure? A person answers, usually the same day.
               </p>
               <Link
                 href="/contact"
-                className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-[12.5px] font-medium transition-colors duration-200 hover:border-primary/30 hover:text-primary"
+                className="mt-4 hidden h-9 items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-[12.5px] lg:inline-flex font-medium transition-colors duration-200 hover:border-primary/30 hover:text-primary"
               >
                 Write to us
                 <svg
@@ -162,7 +164,7 @@ function Questions() {
                 className="scroll-mt-24 border-border/50 [&:not(:last-child)]:border-b"
               >
                 <Reveal
-                  className={`flex flex-col gap-2 border-b border-border/50 py-8 ${CELL}`}
+                  className={`flex flex-col gap-2 border-b border-border/50 py-6 sm:py-8 ${CELL}`}
                 >
                   <h2 className="flex items-baseline gap-3 text-[22px] leading-[1.2] font-medium tracking-[-0.035em] sm:text-[26px]">
                     <span className="font-mono text-[11px] tabular-nums text-primary/70">
@@ -200,12 +202,12 @@ function StillStuck() {
       <div className="mx-auto max-w-7xl border-x border-border/50">
         <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
           <Reveal
-            className={`border-b border-border/50 py-11 lg:border-r lg:border-b-0 ${CELL}`}
+            className={`border-b border-border/50 py-10 sm:py-11 lg:border-r lg:border-b-0 ${CELL}`}
           >
             <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
               Not answered here
             </p>
-            <h2 className="mt-5 max-w-[20ch] text-[26px] leading-[1.15] font-medium tracking-[-0.035em] sm:text-[32px]">
+            <h2 className="mt-4 max-w-[20ch] text-[26px] leading-[1.15] font-medium tracking-[-0.035em] text-balance sm:mt-5 sm:text-[32px]">
               Ask us anything — a person answers
             </h2>
             <p className="mt-5 max-w-[48ch] text-[14px] leading-[1.75] text-muted-foreground">
@@ -216,7 +218,7 @@ function StillStuck() {
 
             <Link
               href="/contact"
-              className="group mt-8 inline-flex h-10 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-4 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5"
+              className="group mt-6 inline-flex h-10 items-center sm:mt-8 justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-4 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5"
             >
               Contact us
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
@@ -225,7 +227,7 @@ function StillStuck() {
             </Link>
           </Reveal>
 
-          <div className={`py-11 ${CELL}`}>
+          <div className={`py-10 sm:py-11 ${CELL}`}>
             <Reveal delay={0.08}>
               <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
                 Read further
@@ -247,7 +249,7 @@ function StillStuck() {
                       {link.label}
                       <span
                         aria-hidden
-                        className="opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
+                        className="opacity-50 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100 lg:opacity-0"
                       >
                         →
                       </span>

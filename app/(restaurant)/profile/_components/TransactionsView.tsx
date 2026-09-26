@@ -133,7 +133,7 @@ export function TransactionsView() {
         <div
           role="tablist"
           aria-label="Filter transactions by type"
-          className="scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
+          className="noBar flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm"
         >
           {filters.map((entry) => (
             <button

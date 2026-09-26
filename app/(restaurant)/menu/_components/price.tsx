@@ -2,18 +2,7 @@ import { hasPrice as has, payableOf } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import type { FoodVariant } from "../_type";
 
-/**
- * Every board and card prints a price the same way.
- *
- * Two shapes come off `/foods`: a single price, or a set of variants each with
- * their own. A variant food carries `price: null`, so reading `price` alone
- * prints nothing at all for half the salads — the cheapest variant stands in
- * for the plate instead, marked "from" so the figure is not mistaken for the
- * only one.
- *
- * Set in the mono face with tabular figures, as the home page sets its prices:
- * a column of plates should have its decimal points in a line.
- */
+
 export function Price({
   price,
   offerPrice,
@@ -33,8 +22,8 @@ export function Price({
 
   const cheapest = priced.length
     ? priced.reduce((low, entry) =>
-        entry.payable! < low.payable! ? entry : low,
-      )
+      entry.payable! < low.payable! ? entry : low,
+    )
     : null;
 
   // The variants are the price when there are any; `price` is null on those

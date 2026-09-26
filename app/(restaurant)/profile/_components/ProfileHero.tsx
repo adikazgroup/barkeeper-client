@@ -35,11 +35,11 @@ export function ProfileHero({
   return (
     <section
       aria-labelledby="profile-hero-heading"
-      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-28"
+      className="relative -mt-16 overflow-hidden border-b border-border/50 pt-24 sm:pt-28"
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-12 sm:px-8 sm:pb-14">
+      <div className="relative mx-auto max-w-7xl border-x border-border/50 px-5 pb-10 sm:px-8 sm:pb-14">
         <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
           <BeamBorder />
           <span
@@ -48,11 +48,10 @@ export function ProfileHero({
           >
             Account
           </span>
-          {tier} · at the counter since{" "}
-          {formatDate(createdAt ?? memberSince)}
+          {tier} · at the counter since {formatDate(createdAt ?? memberSince)}
         </p>
 
-        <div className="mt-7 flex flex-col gap-7 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-6 flex flex-col gap-5 sm:mt-7 sm:flex-row sm:gap-7 sm:items-end sm:justify-between">
           <div className="flex items-center gap-4 sm:gap-5">
             {/* No photograph on the account and none shipped with the app, so
                 the initial stands in rather than a stock face. */}
@@ -76,12 +75,12 @@ export function ProfileHero({
             <div className="min-w-0">
               <h1
                 id="profile-hero-heading"
-                className="bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[32px] leading-[1.06] font-medium tracking-[-0.04em] text-transparent sm:text-[44px]"
+                className="bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[28px] leading-[1.08] font-medium tracking-[-0.04em] wrap-break-word text-transparent sm:text-[44px] sm:leading-[1.06]"
               >
                 {trimmed}
               </h1>
 
-              <p className="mt-2 text-[13.5px] leading-[1.7] text-muted-foreground">
+              <p className="mt-1.5 text-[13px] leading-[1.6] text-muted-foreground sm:mt-2 sm:text-[13.5px] sm:leading-[1.7]">
                 Your details, your dockets and what you have paid — all in one
                 place.
               </p>

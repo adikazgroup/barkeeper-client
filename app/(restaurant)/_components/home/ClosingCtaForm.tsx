@@ -65,7 +65,10 @@ export function ClosingCtaForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
+      className={cn(
+        "flex w-full items-center gap-1 rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm transition-colors duration-200",
+        "focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15",
+      )}
     >
       <label htmlFor="cta-email" className="sr-only">
         Email address
@@ -80,19 +83,18 @@ export function ClosingCtaForm() {
         disabled={sending}
         autoComplete="email"
         placeholder="you@example.com"
-        className={cn(
-          "h-11 w-full rounded-full border border-border bg-card/60 px-5 text-[14px] backdrop-blur-sm transition-colors duration-200",
-          "placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none",
-          "disabled:opacity-60 sm:w-72",
-        )}
+        className="h-11 min-w-0 flex-1 bg-transparent pr-2 pl-4 text-[14px] placeholder:text-muted-foreground/70 focus:outline-none disabled:opacity-60"
       />
 
       <button
         type="submit"
         disabled={sending || !email.trim()}
-        className="group inline-flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
+        aria-label={sending ? "Sending" : "Keep me posted"}
+        className="group inline-flex h-11 shrink-0 cursor-pointer items-center gap-3 rounded-full bg-primary py-1 pr-1 pl-4 text-[14px] font-medium whitespace-nowrap text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 max-[380px]:pl-1"
       >
-        {sending ? "Sending…" : "Keep me posted"}
+        <span className="max-[380px]:sr-only">
+          {sending ? "Sending…" : "Keep me posted"}
+        </span>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
           <ChevronRightIcon className="size-4" />
         </span>

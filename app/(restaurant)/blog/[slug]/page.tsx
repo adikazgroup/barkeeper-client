@@ -85,13 +85,13 @@ export async function generateMetadata({
       authors: [COMPANY.name],
       images: post.featuredImage?.url
         ? [
-          {
-            url: post.featuredImage.url,
-            width: 1200,
-            height: 630,
-            alt: post.featuredImage.alt || post.title,
-          },
-        ]
+            {
+              url: post.featuredImage.url,
+              width: 1200,
+              height: 630,
+              alt: post.featuredImage.alt || post.title,
+            },
+          ]
         : [],
     },
     twitter: {
@@ -127,13 +127,13 @@ export default async function BlogDetailPage({
   // for because this post is very likely one of them.
   const relatedRes = blog.category
     ? await getData<BlogListItem[]>(
-      `/blogs?${buildQueryParams({
-        page: 1,
-        limit: 4,
-        categoryId: blog.category._id,
-      })}`,
-      { tags: ["blogs"] },
-    )
+        `/blogs?${buildQueryParams({
+          page: 1,
+          limit: 4,
+          categoryId: blog.category._id,
+        })}`,
+        { tags: ["blogs"] },
+      )
     : null;
 
   const related = (relatedRes?.data ?? [])
@@ -152,7 +152,7 @@ export default async function BlogDetailPage({
         <HeroBackdrop />
 
         <div
-          className={`relative mx-auto max-w-7xl border-x border-border/50 pb-12 text-center sm:pb-14 ${CELL} pt-28`}
+          className={`relative mx-auto max-w-7xl border-x border-border/50 pt-24 pb-10 text-center sm:pt-28 sm:pb-14 ${CELL}`}
         >
           <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-4 pl-2 text-[12px] font-medium text-muted-foreground backdrop-blur-sm">
             <BeamBorder />
@@ -167,20 +167,20 @@ export default async function BlogDetailPage({
 
           <h1
             id="post-heading"
-            className="mx-auto mt-5 max-w-[22ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[34px] leading-[1.07] font-medium tracking-[-0.04em] text-balance text-transparent sm:text-[48px]"
+            className="mx-auto mt-5 max-w-[22ch] bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[30px] leading-[1.1] font-medium tracking-[-0.04em] text-balance text-transparent sm:text-[48px] sm:leading-[1.07]"
           >
             {blog.title}
           </h1>
 
           {blog.metaDescription && (
-            <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-relaxed text-pretty text-muted-foreground sm:text-[17px]">
+            <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed sm:mt-6 text-pretty text-muted-foreground sm:text-[17px]">
               {blog.metaDescription}
             </p>
           )}
 
           {/* The byline, set as one quiet line rather than a ruled masthead —
               the frame above already separates it from the page. */}
-          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
+          <p className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-mono text-[10px] tracking-[0.14em] sm:mt-8 sm:text-[10.5px] sm:tracking-[0.16em] text-muted-foreground uppercase">
             <span className="text-foreground">{COMPANY.name}</span>
             <span aria-hidden className="size-1 rounded-full bg-border" />
             <time dateTime={blog.createdAt}>{formattedDate}</time>
@@ -193,8 +193,8 @@ export default async function BlogDetailPage({
       {/* ── The plate ────────────────────────────────────────────────── */}
       <section className="border-b border-border/50">
         <div className="mx-auto max-w-7xl border-x border-border/50">
-          <figure className={`py-6 ${CELL}`}>
-            <div className="relative aspect-16/9 w-full overflow-hidden rounded-lg border border-border/60 bg-card">
+          <figure className={`py-5 sm:py-6 ${CELL}`}>
+            <div className="relative aspect-4/3 w-full sm:aspect-16/9 overflow-hidden rounded-lg border border-border/60 bg-card">
               <SafeImage
                 src={blog.featuredImage?.url}
                 alt={blog.featuredImage?.alt || blog.title}
@@ -220,17 +220,19 @@ export default async function BlogDetailPage({
           <div className="grid lg:grid-cols-[16rem_minmax(0,1fr)]">
             {/* the particulars — the same rail the FAQ carries, so a long
                 read keeps its context on screen on wide screens */}
-            <aside className="border-b border-border/50 lg:border-r lg:border-b-0">
-              <div className={`py-10 lg:sticky lg:top-20 lg:py-9 ${CELL}`}>
+            <aside className="order-last border-t border-border/50 lg:order-none lg:border-t-0 lg:border-r">
+              <div
+                className={`py-8 sm:py-10 lg:sticky lg:top-20 lg:py-9 ${CELL}`}
+              >
                 <Link
                   href="/blog"
-                  className="group inline-flex items-center gap-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="group hidden items-center gap-2 font-mono text-[10.5px] lg:inline-flex tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <ArrowLeftIcon className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
                   All stories
                 </Link>
 
-                <dl className="mt-8 space-y-5">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:mt-8 lg:grid-cols-1">
                   <div>
                     <dt className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
                       Filed under
@@ -258,7 +260,7 @@ export default async function BlogDetailPage({
                   </div>
                 </dl>
 
-                <p className="mt-8 max-w-[28ch] border-t border-border/50 pt-6 text-[12.5px] leading-[1.7] text-muted-foreground">
+                <p className="mt-8 border-t border-border/50 pt-6 text-[13px] lg:max-w-[28ch] lg:text-[12.5px] leading-[1.7] text-muted-foreground">
                   Question about any of this? A person answers, usually the same
                   day.
                 </p>
@@ -274,7 +276,15 @@ export default async function BlogDetailPage({
 
             {/* the prose */}
             <div className="min-w-0">
-              <article className={`py-10 sm:py-12 ${CELL}`}>
+              <article className={`py-8 sm:py-12 ${CELL}`}>
+                <Link
+                  href="/blog"
+                  className="group mb-6 inline-flex items-center gap-2 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase transition-colors duration-200 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+                >
+                  <ArrowLeftIcon className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                  All stories
+                </Link>
+
                 <div className="max-w-[68ch]">
                   {standfirst && (
                     <p className="text-[17px] leading-[1.7] font-medium tracking-[-0.01em] text-balance sm:text-[19px]">
@@ -285,7 +295,7 @@ export default async function BlogDetailPage({
                   {body.map((para) => (
                     <p
                       key={para.slice(0, 48)}
-                      className="mt-6 text-[15px] leading-[1.85] text-muted-foreground"
+                      className="mt-5 text-[15px] leading-[1.8] text-muted-foreground sm:mt-6 sm:leading-[1.85]"
                     >
                       {para}
                     </p>
@@ -293,7 +303,7 @@ export default async function BlogDetailPage({
                 </div>
 
                 {/* The one thing to do after reading */}
-                <div className="mt-12 flex flex-col items-start justify-between gap-5 rounded-lg border border-border/60 bg-card/40 p-6 sm:flex-row sm:items-center sm:p-7">
+                <div className="mt-10 flex flex-col items-start justify-between gap-5 rounded-lg border border-border/60 bg-card/40 p-5 sm:mt-12 sm:flex-row sm:items-center sm:p-7">
                   <p className="max-w-[26ch] text-[20px] leading-[1.15] font-medium tracking-[-0.035em] sm:text-[24px]">
                     Hungry after all that? The kitchen is on.
                   </p>
@@ -336,7 +346,7 @@ export default async function BlogDetailPage({
 
             <ul
               role="list"
-              className={`grid gap-4 py-6 sm:gap-5 lg:grid-cols-3 ${CELL}`}
+              className={`grid gap-4 py-6 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 ${CELL}`}
             >
               {related.map((r) => (
                 <li key={r._id}>

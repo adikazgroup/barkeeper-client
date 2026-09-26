@@ -34,14 +34,14 @@ export default function ContactPage() {
             <Reveal className="grid lg:grid-cols-12">
               <div
                 className={cn(
-                  "border-b border-border/50 py-12 lg:col-span-4 lg:border-b-0 lg:border-r",
+                  "border-b border-border/50 py-10 sm:py-12 lg:col-span-4 lg:border-b-0 lg:border-r",
                   CELL,
                 )}
               >
                 <ContactCards />
               </div>
 
-              <div className={cn("py-12 lg:col-span-8", CELL)}>
+              <div className={cn("py-10 sm:py-12 lg:col-span-8", CELL)}>
                 <ContactForm />
               </div>
             </Reveal>

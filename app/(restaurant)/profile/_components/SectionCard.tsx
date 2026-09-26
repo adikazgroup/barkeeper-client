@@ -31,11 +31,11 @@ export function SectionCard({
     <section className={cn("border-b border-border/50", className)}>
       <div
         className={cn(
-          "flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b border-border/50 py-6",
+          "flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-b border-border/50 py-5 sm:gap-y-3 sm:py-6",
           CELL,
         )}
       >
-        <h2 className="flex items-center gap-2.5 text-[20px] leading-[1.15] font-medium tracking-[-0.03em]">
+        <h2 className="flex items-center gap-2.5 text-[18px] sm:text-[20px] leading-[1.15] font-medium tracking-[-0.03em]">
           {icon && (
             <span
               aria-hidden
@@ -54,7 +54,7 @@ export function SectionCard({
         )}
       </div>
 
-      <div className={cn("py-8 sm:py-9", CELL)}>{children}</div>
+      <div className={cn("py-7 sm:py-9", CELL)}>{children}</div>
     </section>
   );
 }

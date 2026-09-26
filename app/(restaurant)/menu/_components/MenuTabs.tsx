@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Info } from "lucide-react";
 
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons/Icons";
+
 import { EASE } from "@/app/(restaurant)/_components/home/Reveal";
 import { cn } from "@/lib/utils";
 import type { MenuGroup } from "../_type";
@@ -55,7 +57,7 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
   const [pill, setPill] = useState<{ left: number; width: number } | null>(
     null,
   );
-  const [overflowing, setOverflowing] = useState(false);
+  const [edges, setEdges] = useState({ prev: false, next: false });
 
   const reduced = useReducedMotion();
 
@@ -67,16 +69,28 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
       const el = tabRefs.current.get(active.key);
       if (!el) return;
       setPill({ left: el.offsetLeft, width: el.offsetWidth });
-      setOverflowing(rail.scrollWidth > rail.clientWidth + 1);
+      updateEdges();
+    };
+
+    const updateEdges = () => {
+      const max = rail.scrollWidth - rail.clientWidth;
+      setEdges({
+        prev: rail.scrollLeft > 2,
+        next: max > 1 && rail.scrollLeft < max - 2,
+      });
     };
 
     measure();
+    rail.addEventListener("scroll", updateEdges, { passive: true });
 
     // Widths move with the viewport, and again when the display face swaps in.
     const observer = new ResizeObserver(measure);
     observer.observe(rail);
     for (const el of tabRefs.current.values()) observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      rail.removeEventListener("scroll", updateEdges);
+    };
   }, [active.key]);
 
   useLayoutEffect(() => {
@@ -90,6 +104,15 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
     });
   }, [active.key]);
 
+  const scrollRail = (direction: 1 | -1) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({
+      left: direction * rail.clientWidth * 0.6,
+      behavior: reduced ? "auto" : "smooth",
+    });
+  };
+
   return (
     <>
       <MenuHero>
@@ -99,7 +122,7 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
               ref={railRef}
               role="tablist"
               aria-label="Menu categories"
-              className="relative flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm scrollbar-hide"
+              className="relative flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm noBar"
             >
               {/* The active counter's ground, drawn once and moved, so the
                 selection slides between counters instead of blinking. */}
@@ -146,12 +169,38 @@ export function MenuTabs({ groups }: { groups: MenuGroup[] }) {
               })}
             </div>
 
-            {overflowing && (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 right-0 w-12 rounded-r-full bg-linear-to-l from-card to-transparent"
-              />
-            )}
+            {(
+              [
+                { side: -1, show: edges.prev, Icon: ChevronLeftIcon },
+                { side: 1, show: edges.next, Icon: ChevronRightIcon },
+              ] as const
+            ).map(({ side, show, Icon }) => (
+              <div
+                key={side}
+                className={cn(
+                  "absolute inset-y-px z-20 flex items-center transition-opacity duration-200",
+                  side === -1
+                    ? "left-px rounded-l-full bg-linear-to-r from-card from-60% to-transparent pr-8 pl-1"
+                    : "right-px rounded-r-full bg-linear-to-l from-card from-60% to-transparent pr-1 pl-8",
+                  show ? "opacity-100" : "pointer-events-none opacity-0",
+                )}
+              >
+                <button
+                  type="button"
+                  tabIndex={show ? 0 : -1}
+                  aria-hidden={!show}
+                  aria-label={
+                    side === -1
+                      ? "Scroll categories left"
+                      : "Scroll categories right"
+                  }
+                  onClick={() => scrollRail(side)}
+                  className="grid size-8 cursor-pointer place-items-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <Icon className="size-4" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </MenuHero>

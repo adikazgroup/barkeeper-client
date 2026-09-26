@@ -203,7 +203,9 @@ function PasswordField({
       {error ? (
         <span className="text-[12px] text-danger">{error}</span>
       ) : (
-        hint && <span className="text-[12px] text-muted-foreground">{hint}</span>
+        hint && (
+          <span className="text-[12px] text-muted-foreground">{hint}</span>
+        )
       )}
     </label>
   );

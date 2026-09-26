@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-
 export default async function CheckoutPage() {
   const { account, reason } = await getAccountResult();
 

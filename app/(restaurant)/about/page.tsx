@@ -72,7 +72,7 @@ function AboutHero() {
 
       <div className="mx-auto max-w-7xl border-x border-border/50">
         <div
-          className={`flex flex-col items-center pt-20 pb-16 text-center ${CELL}`}
+          className={`flex flex-col items-center pt-10 pb-14 text-center sm:pt-16 sm:pb-16 lg:pt-20 ${CELL}`}
         >
           <Reveal>
             <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/20 py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm">

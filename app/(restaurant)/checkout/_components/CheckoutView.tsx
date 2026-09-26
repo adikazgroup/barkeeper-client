@@ -200,7 +200,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
     if (!quote.isOrderable) {
       toast.error(
         quote.issues[0]?.message ??
-        "Something on the docket cannot be ordered yet.",
+          "Something on the docket cannot be ordered yet.",
       );
       return;
     }
@@ -272,8 +272,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                 label="Pickup time"
                 hint="The kitchen confirms the exact minute once the order is in."
               >
-
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                   <Choice
                     active={scheduleType === "asap"}
                     onClick={() => setScheduleType("asap")}
@@ -288,7 +287,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   </Choice>
 
                   {scheduleType === "scheduled" && (
-                    <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+                    <div className="col-span-2 grid grid-cols-2 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                       <Calendar
                         value={fromDateKey(slotDate)}
                         onChange={(date) =>
@@ -329,7 +328,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                 label="Tip the kitchen"
                 hint="Goes to the people who cooked it. A percentage of the food, or a figure of your own."
               >
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
                   {TIP_PRESETS.map((percentage) => (
                     <Choice
                       key={percentage}
@@ -590,7 +589,7 @@ function Choice({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "cursor-pointer rounded-full border px-4 py-2 text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "cursor-pointer rounded-full border px-2 py-2 text-center text-[13px] sm:px-4 font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         active
           ? "border-primary bg-primary text-background"
           : "border-border bg-card/60 text-muted-foreground backdrop-blur-sm hover:text-foreground",

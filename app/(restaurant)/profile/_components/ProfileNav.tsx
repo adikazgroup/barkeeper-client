@@ -64,7 +64,7 @@ export function ProfileNav() {
             <ul
               role="list"
               className={cn(
-                "scrollbar-hide flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm",
+                "grid grid-cols-3 gap-1 rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm",
                 "lg:mt-5 lg:block lg:space-y-1 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none",
               )}
             >
@@ -72,27 +72,27 @@ export function ProfileNav() {
                 const active = isActive(section.href);
 
                 return (
-                  <li key={section.href} className="shrink-0 lg:shrink">
+                  <li key={section.href} className="min-w-0">
                     <Link
                       href={section.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                        "lg:flex lg:items-start lg:gap-3 lg:rounded-lg lg:px-3 lg:py-2.5 lg:whitespace-normal",
+                        "group flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12.5px] sm:gap-2 sm:px-4 sm:text-[13px] font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "lg:items-start lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:py-2.5 lg:text-[13px] lg:whitespace-normal",
                         active
-                          ? "bg-primary text-foreground"
+                          ? "bg-primary text-white"
                           : "text-muted-foreground hover:text-foreground lg:hover:bg-muted",
                       )}
                     >
-                      <section.icon className="size-4 shrink-0 lg:mt-0.5" />
+                      <section.icon className="size-4 shrink-0 max-[380px]:hidden lg:mt-0.5" />
 
-                      <span className="lg:flex lg:min-w-0 lg:flex-col">
+                      <span className="truncate lg:flex lg:min-w-0 lg:flex-col lg:overflow-visible">
                         {section.label}
                         <span
                           className={cn(
                             "hidden text-[11.5px] leading-normal font-normal lg:mt-0.5 lg:block",
                             active
-                              ? "text-foreground/70"
+                              ? "text-white/80"
                               : "text-muted-foreground",
                           )}
                         >
@@ -111,11 +111,18 @@ export function ProfileNav() {
           <SignOut logout={logout} loggingOut={loggingOut} />
         </div>
       </div>
-
-      <div className="border-t border-border/50 px-5 py-3 sm:px-8 lg:hidden">
-        <SignOut logout={logout} loggingOut={loggingOut} />
-      </div>
     </aside>
+  );
+}
+
+/** Below `lg` the rail has no foot, so signing out closes the page instead. */
+export function MobileSignOut() {
+  const { logout, loggingOut } = useLogout();
+
+  return (
+    <div className="border-t border-border/50 px-5 py-3 sm:px-8 lg:hidden">
+      <SignOut logout={logout} loggingOut={loggingOut} />
+    </div>
   );
 }
 

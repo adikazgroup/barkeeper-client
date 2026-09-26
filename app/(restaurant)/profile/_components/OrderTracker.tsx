@@ -135,8 +135,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
 
   const meta = statusMeta(order.status);
   const cancelled = order.status === "cancelled";
-  const unpaid =
-    order.status === "pending" && order.payment?.status !== "paid";
+  const unpaid = order.status === "pending" && order.payment?.status !== "paid";
 
   const handlePay = async () => {
     setBusy(true);
@@ -204,7 +203,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
 
   return (
     <div>
-      <header className={cn("border-b border-border/50 py-8", CELL)}>
+      <header className={cn("border-b border-border/50 py-7 sm:py-8", CELL)}>
         <Link
           href="/profile/orders"
           className="group inline-flex items-center gap-2 text-[13px] font-medium text-muted-foreground transition-colors duration-200 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -216,7 +215,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
         <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-mono text-[22px] tracking-[0.04em] tabular-nums">
+              <h1 className="font-mono text-[19px] tracking-[0.04em] tabular-nums sm:text-[22px]">
                 {order.orderNumber || order._id.slice(-8).toUpperCase()}
               </h1>
 
@@ -244,7 +243,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
             </p>
           </div>
 
-          <p className="font-mono text-[22px] tracking-[-0.02em] tabular-nums text-primary">
+          <p className="font-mono text-[19px] tracking-[-0.02em] tabular-nums text-primary sm:text-[22px]">
             {formatMoney(order.pricing.total)}
           </p>
         </div>
@@ -261,7 +260,9 @@ export function OrderTracker({ orderId }: { orderId: string }) {
             />
             <span>
               This order was cancelled
-              {order.cancelledAt ? ` on ${formatDateTime(order.cancelledAt)}` : ""}
+              {order.cancelledAt
+                ? ` on ${formatDateTime(order.cancelledAt)}`
+                : ""}
               {order.cancelReason ? ` — ${order.cancelReason}` : "."}
             </span>
           </div>
@@ -271,7 +272,12 @@ export function OrderTracker({ orderId }: { orderId: string }) {
       </div>
 
       {/* The two facts a customer standing in the street wants. */}
-      <div className={cn("grid gap-5 border-b border-border/50 py-7 sm:grid-cols-2", CELL)}>
+      <div
+        className={cn(
+          "grid gap-5 border-b border-border/50 py-7 sm:grid-cols-2",
+          CELL,
+        )}
+      >
         <Fact label="Collection" icon={<Clock className="size-3.5" />}>
           {pickupLabel(order)}
         </Fact>
@@ -392,9 +398,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
                     )}
                   />
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium">
-                      {eventMeta.label}
-                    </p>
+                    <p className="text-[13px] font-medium">{eventMeta.label}</p>
                     <p className="mt-0.5 text-[12px] text-muted-foreground">
                       {formatDateTime(event.changedAt)}
                       {event.note ? ` · ${event.note}` : ""}
@@ -407,7 +411,9 @@ export function OrderTracker({ orderId }: { orderId: string }) {
         </div>
       )}
 
-      <div className={cn("flex flex-wrap gap-3 py-7", CELL)}>
+      <div
+        className={cn("grid gap-2 py-7 sm:flex sm:flex-wrap sm:gap-3", CELL)}
+      >
         {unpaid && (
           <button
             type="button"
@@ -426,7 +432,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
           type="button"
           onClick={() => void handleReorder()}
           disabled={busy}
-          className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:bg-foreground hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy && <Loader2 aria-hidden className="size-4 animate-spin" />}
           Order this again
@@ -437,7 +443,7 @@ export function OrderTracker({ orderId }: { orderId: string }) {
             type="button"
             onClick={() => void handleCancel()}
             disabled={busy}
-            className="inline-flex h-11 cursor-pointer items-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-card/60 px-5 text-[14px] font-medium backdrop-blur-sm transition-colors duration-200 hover:border-danger/40 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel this order
           </button>
@@ -453,42 +459,41 @@ function ProgressRail({ status }: { status: string }) {
 
   return (
     <div className="rounded-xl border border-border/60 bg-card/40 p-4 backdrop-blur-sm">
-      <div className="flex items-center gap-2">
-        {ORDER_PROGRESS.map((step, index) => (
-          <div key={step} className="flex flex-1 items-center gap-2">
-            <span
-              aria-hidden
-              className={cn(
-                "size-2 shrink-0 rounded-full transition-colors",
-                index <= reached ? "bg-primary" : "bg-muted-foreground/25",
-              )}
-            />
-            {index < ORDER_PROGRESS.length - 1 && (
-              <span
-                aria-hidden
-                className={cn(
-                  "h-px flex-1 rounded-full",
-                  index < reached ? "bg-primary" : "bg-muted-foreground/25",
-                )}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
+      {/* One column per stop, so each label sits under its own dot and a
+          long one wraps within its column instead of being cut off. */}
       <ol
         role="list"
-        className="mt-3 flex items-baseline justify-between gap-2 font-mono text-[9.5px] tracking-[0.14em] uppercase"
+        className="grid"
+        style={{
+          gridTemplateColumns: `repeat(${ORDER_PROGRESS.length}, minmax(0, 1fr))`,
+        }}
       >
         {ORDER_PROGRESS.map((step, index) => (
-          <li
-            key={step}
-            className={cn(
-              "truncate",
-              index <= reached ? "text-primary" : "text-muted-foreground/70",
-            )}
-          >
-            {statusMeta(step).label}
+          <li key={step} className="min-w-0">
+            <div aria-hidden className="flex items-center">
+              <span
+                className={cn(
+                  "size-2 shrink-0 rounded-full transition-colors",
+                  index <= reached ? "bg-primary" : "bg-muted-foreground/25",
+                )}
+              />
+              {index < ORDER_PROGRESS.length - 1 && (
+                <span
+                  className={cn(
+                    "mx-1.5 h-px flex-1 rounded-full",
+                    index < reached ? "bg-primary" : "bg-muted-foreground/25",
+                  )}
+                />
+              )}
+            </div>
+            <p
+              className={cn(
+                "mt-2.5 pr-1.5 font-mono text-[9px] leading-snug tracking-[0.1em] uppercase sm:text-[9.5px] sm:tracking-[0.14em]",
+                index <= reached ? "text-primary" : "text-muted-foreground/70",
+              )}
+            >
+              {statusMeta(step).label}
+            </p>
           </li>
         ))}
       </ol>

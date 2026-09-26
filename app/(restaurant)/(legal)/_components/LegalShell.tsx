@@ -96,9 +96,9 @@ export function Table({
 }) {
   return (
     <div className="mt-6 overflow-hidden rounded-lg border border-border">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-lg border-collapse text-left text-[14.5px]">
-          <thead>
+      <div className="sm:overflow-x-auto">
+        <table className="block w-full border-collapse text-left text-[14.5px] sm:table sm:min-w-lg">
+          <thead className="hidden sm:table-header-group">
             <tr className="bg-muted">
               {head.map((cell, index) => (
                 <th
@@ -114,16 +114,16 @@ export function Table({
             </tr>
           </thead>
           {/* The frame draws the bottom edge, so the last row must not. */}
-          <tbody className="[&>tr:last-child>td]:border-b-0">
+          <tbody className="block sm:table-row-group [&>tr:last-child]:border-b-0 sm:[&>tr:last-child>td]:border-b-0">
             {rows.map(([term, meaning]) => (
               <tr
                 key={term}
-                className="transition-colors duration-200 hover:bg-muted/50"
+                className="block border-b border-border/70 px-4 py-3.5 transition-colors duration-200 hover:bg-muted/50 sm:table-row sm:border-b-0 sm:p-0"
               >
-                <td className="border-r border-b border-border/70 px-5 py-3.5 align-top text-[14px] font-medium text-foreground">
+                <td className="block align-top text-[14px] font-medium text-foreground sm:table-cell sm:border-r sm:border-b sm:border-border/70 sm:px-5 sm:py-3.5">
                   {term}
                 </td>
-                <td className="border-b border-border/70 px-5 py-3.5 align-top leading-[1.7] text-muted-foreground">
+                <td className="mt-1 block align-top text-[14px] leading-[1.7] text-muted-foreground sm:mt-0 sm:table-cell sm:border-b sm:border-border/70 sm:px-5 sm:py-3.5 sm:text-[14.5px]">
                   {meaning}
                 </td>
               </tr>
@@ -148,7 +148,7 @@ export function ContactSection({ subject }: { subject: string }) {
         five working days.
       </P>
 
-      <div className="relative mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card/50 p-6">
+      <div className="relative mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card/50 p-5 sm:p-6">
         <span
           aria-hidden
           className="bg-grain pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-multiply dark:opacity-[0.07] dark:mix-blend-screen"
@@ -170,9 +170,9 @@ export function ContactSection({ subject }: { subject: string }) {
 
           <a
             href={`mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}`}
-            className="group inline-flex h-10 shrink-0 items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-4 text-[13.5px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5"
+            className="group inline-flex h-10 w-full min-w-0 shrink-0 items-center justify-between gap-3 rounded-full bg-primary py-1 pr-1 pl-4 text-[13.5px] sm:w-auto sm:gap-4 font-medium text-background transition-transform duration-200 hover:-translate-y-0.5"
           >
-            {COMPANY.email}
+            <span className="truncate">{COMPANY.email}</span>
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
               <svg
                 viewBox="0 0 24 24"
@@ -284,7 +284,7 @@ export function LegalShell({
 
         <div className="mx-auto max-w-7xl border-x border-border/50">
           {/* ----------------------------------------------------- header */}
-          <header className={`pt-16 pb-14 ${CELL}`}>
+          <header className={`pt-12 pb-10 sm:pt-16 sm:pb-14 ${CELL}`}>
             <Reveal>
               <p className="relative inline-flex items-center gap-2 rounded-full border border-border bg-card/30 py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase backdrop-blur-sm">
                 <BeamBorder />
@@ -298,15 +298,15 @@ export function LegalShell({
             {/* Title and summary share a baseline on wide screens, and the
                 summary is given a real column rather than being pushed to the
                 far edge — the gap between them is a gutter, not a void. */}
-            <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-end lg:gap-14">
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-end lg:gap-14">
               <Reveal delay={0.06}>
-                <h1 className="bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[38px] leading-[1.02] font-medium tracking-[-0.045em] text-transparent sm:text-[56px]">
+                <h1 className="bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[34px] leading-[1.06] font-medium tracking-[-0.04em] text-balance text-transparent sm:text-[56px] sm:leading-[1.02] sm:tracking-[-0.045em]">
                   {title}
                 </h1>
               </Reveal>
 
               <Reveal delay={0.12}>
-                <p className="text-[15px] leading-[1.75] text-muted-foreground lg:pb-2">
+                <p className="text-[15px] leading-[1.75] text-pretty text-muted-foreground lg:pb-2">
                   {summary}
                 </p>
               </Reveal>
@@ -320,7 +320,7 @@ export function LegalShell({
             takes to read. Both are questions a reader asks before starting. */}
         <Reveal
           as="div"
-          className={`flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-border/50 py-4 ${CELL}`}
+          className={`flex flex-wrap items-center gap-x-6 gap-y-2.5 border-b sm:gap-x-8 border-border/50 py-4 ${CELL}`}
         >
           <span className="flex items-center gap-2.5 font-mono text-[10.5px] tracking-[0.14em] text-muted-foreground uppercase">
             <span className="size-1 rounded-full bg-primary/70" />
@@ -347,7 +347,7 @@ export function LegalShell({
                 width of the column and meets the frame on one side and the
                 document's column rule on the other. */}
             <div className="lg:sticky lg:top-16">
-              <div className={`pt-11 pb-8 lg:pt-8 ${CELL}`}>
+              <div className={`pt-8 pb-8 sm:pt-11 lg:pt-8 ${CELL}`}>
                 <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
                   On this page
                 </p>
@@ -365,7 +365,7 @@ export function LegalShell({
                   dividing the two lists — the gap between them says enough,
                   and a bottom edge is what makes the column read as a box. */}
               <div
-                className={`border-b border-border/50 pt-7 pb-11 lg:pb-8 ${CELL}`}
+                className={`hidden border-b border-border/50 pt-7 pb-8 lg:block ${CELL}`}
               >
                 <p className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
                   Other policies
@@ -398,16 +398,16 @@ export function LegalShell({
                 as="section"
                 key={section.id}
                 y={12}
-                className={`scroll-mt-24 border-t border-border/50 py-11 first:border-t-0 ${CELL}`}
+                className={`scroll-mt-24 border-t border-border/50 py-9 first:border-t-0 sm:py-11 ${CELL}`}
               >
                 <div id={section.id} className="scroll-mt-24">
-                  <h2 className="flex gap-3.5 text-[21px] leading-[1.3] font-medium tracking-[-0.03em]">
+                  <h2 className="flex gap-3 text-[19px] leading-[1.3] sm:gap-3.5 sm:text-[21px] font-medium tracking-[-0.03em]">
                     <span className="pt-1 font-mono text-[11px] tabular-nums text-primary/70">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {section.title}
                   </h2>
-                  <div className="mt-5">{section.body}</div>
+                  <div className="mt-4 sm:mt-5">{section.body}</div>
                 </div>
               </Reveal>
             ))}
@@ -417,7 +417,7 @@ export function LegalShell({
         {/* ------------------------------------------------- cross-links */}
         <div className="border-t border-border/50">
           <Reveal
-            className={`flex items-center justify-between gap-5 border-b border-border/50 py-8 ${CELL}`}
+            className={`flex items-center justify-between gap-5 border-b border-border/50 py-7 sm:py-8 ${CELL}`}
           >
             <h2 className="max-w-[18ch] text-[24px] leading-[1.1] font-medium tracking-[-0.04em] sm:text-[30px]">
               The rest of the fine print
@@ -440,7 +440,7 @@ export function LegalShell({
               >
                 <Link
                   href={page.href}
-                  className={`group flex h-full items-start justify-between gap-4 py-7 transition-colors duration-300 hover:bg-card/40 ${CELL}`}
+                  className={`group flex h-full items-start justify-between gap-4 py-6 transition-colors sm:py-7 duration-300 hover:bg-card/40 ${CELL}`}
                 >
                   <span>
                     <span className="block font-mono text-[10.5px] tabular-nums text-muted-foreground/60">
