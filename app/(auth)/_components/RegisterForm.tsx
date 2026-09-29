@@ -18,7 +18,6 @@ import { AuthField, PasswordHints } from "./AuthField";
 import { AuthHeading } from "./AuthHeading";
 import { AuthSubmit } from "./AuthSubmit";
 import { AuthDivider, SocialSignIn } from "./SocialSignIn";
-import { useAccountSignIn } from "./useAccountSignIn";
 
 interface Errors {
   name?: string;
@@ -29,9 +28,6 @@ interface Errors {
 
 export function RegisterForm() {
   const router = useRouter();
-  // Google and Apple sign a customer straight in, so registering through them
-  // reuses the same session step the sign-in screen uses.
-  const { signInWith, pending: socialPending } = useAccountSignIn();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,8 +36,6 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const busy = submitting || socialPending;
 
   const validate = () => {
     const next: Errors = {};
@@ -104,11 +98,7 @@ export function RegisterForm() {
 
       {failure && <AuthAlert>{failure}</AuthAlert>}
 
-      <SocialSignIn
-        signInWith={signInWith}
-        onError={setFailure}
-        disabled={busy}
-      />
+      <SocialSignIn disabled={submitting} />
 
       <AuthDivider label="or with email" />
 
@@ -122,7 +112,7 @@ export function RegisterForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           error={errors.name}
-          disabled={busy}
+          disabled={submitting}
         />
 
         <AuthField
@@ -135,7 +125,7 @@ export function RegisterForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={errors.email}
-          disabled={busy}
+          disabled={submitting}
         />
 
         {/* The two password fields share a row from `sm` up — they are one
@@ -152,7 +142,7 @@ export function RegisterForm() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               error={errors.password}
-              disabled={busy}
+              disabled={submitting}
             />
 
             <AuthField
@@ -165,13 +155,15 @@ export function RegisterForm() {
               value={confirm}
               onChange={(event) => setConfirm(event.target.value)}
               error={errors.confirm}
-              disabled={busy}
+              disabled={submitting}
             />
           </div>
 
           {/* Under both, not under one column — otherwise the chips would
               stretch the left field and leave the row uneven. */}
-          {password && <PasswordHints value={password} hints={PASSWORD_HINTS} />}
+          {password && (
+            <PasswordHints value={password} hints={PASSWORD_HINTS} />
+          )}
         </div>
 
         <div className="pt-1">
@@ -189,7 +181,10 @@ export function RegisterForm() {
             terms
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary">
+          <Link
+            href="/privacy"
+            className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+          >
             privacy policy
           </Link>
           .

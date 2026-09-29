@@ -5,11 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AUTH_ROUTES } from "@/lib/auth/constants";
 import { ShoppingBagIcon, UserIcon } from "@/components/icons/Icons";
 import { ThemeToggle } from "@/components/ui";
 import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import { syncWithAccount as syncCart } from "@/lib/cart/store";
+import { syncWithAccount as syncWishlist } from "@/lib/wishlist/store";
 import { EASE } from "./Reveal";
 import Logo from "@/components/shared/Logo";
 
@@ -42,6 +46,7 @@ function activeHref(pathname: string): string | null {
 
 /** Where the bar sends a customer who has a docket, and one who has an account. */
 const CART_HREF = "/cart";
+const WISHLIST_HREF = "/wishlist";
 const PROFILE_HREF = "/profile";
 
 /** What the bar needs about whoever is signed in. Null when nobody is. */
@@ -63,6 +68,22 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
 
   const signedIn = Boolean(account);
   const initial = account?.name?.trim()?.charAt(0)?.toUpperCase() ?? "";
+
+  const wishlist = useWishlist();
+  const saved =
+    signedIn && wishlist.hydrated && wishlist.count > 0
+      ? wishlist.count > 99
+        ? "99+"
+        : wishlist.count
+      : null;
+
+  // The layout reads the account on the server, so this is the first place a
+  // sign-in (which moves pages without a reload) becomes visible to the
+  // client stores — line both up with it.
+  useEffect(() => {
+    syncCart(signedIn);
+    syncWishlist(signedIn);
+  }, [signedIn]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -194,6 +215,29 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
           {/* ----------------------------- ACTIONS ---------------------------- */}
           <div className="flex shrink-0 items-center gap-3">
             <ThemeToggle className="rounded-full border-transparent bg-transparent hover:border-transparent" />
+
+            {signedIn && (
+              <Link
+                href={WISHLIST_HREF}
+                aria-label={
+                  saved
+                    ? `Your wishlist, ${wishlist.count} saved`
+                    : "Your wishlist"
+                }
+                className="relative hidden size-8 items-center justify-center rounded-full text-foreground transition-colors duration-200 hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:flex"
+              >
+                <Heart className="size-4.5" strokeWidth={1.8} />
+
+                {saved && (
+                  <span
+                    aria-hidden
+                    className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9.5px] font-semibold text-background ring-2 ring-background tabular-nums"
+                  >
+                    {saved}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <Link
               href={CART_HREF}
@@ -365,6 +409,31 @@ export function SiteHeader({ account }: { account?: HeaderAccount | null }) {
                     )}
                   </Link>
                 </motion.li>
+                {signedIn && (
+                  <motion.li
+                    initial={{ opacity: 0, x: -24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: 0.12 + NAV_LINKS.length * 0.04,
+                      duration: 0.3,
+                      ease: EASE,
+                    }}
+                  >
+                    <Link
+                      href={WISHLIST_HREF}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 border-b border-border/60 py-3.5 text-[15px] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Heart className="size-4" strokeWidth={1.8} />
+                      Wishlist
+                      {saved && (
+                        <span className="ml-auto grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9.5px] font-semibold text-background tabular-nums">
+                          {saved}
+                        </span>
+                      )}
+                    </Link>
+                  </motion.li>
+                )}
               </ul>
 
               <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-border/60 p-5">

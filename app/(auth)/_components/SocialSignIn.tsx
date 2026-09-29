@@ -1,64 +1,16 @@
 "use client";
 
-import Script from "next/script";
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AppleIcon, GoogleIcon, LoaderIcon } from "@/components/icons/Icons";
+import { BACKEND_URL } from "@/lib/auth/api";
 import { cn } from "@/lib/utils";
 
-import type { SignInFailure } from "./useAccountSignIn";
+import { rememberDestination } from "./useAccountSignIn";
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const APPLE_CLIENT_ID = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID;
-const APPLE_REDIRECT_URI = process.env.NEXT_PUBLIC_APPLE_REDIRECT_URI;
-
-/* ─── The two SDKs, described only as far as this file uses them ─── */
-
-interface GoogleTokenResponse {
-  access_token?: string;
-  error?: string;
-}
-
-interface AppleSignInResponse {
-  authorization?: { id_token?: string };
-  user?: { name?: { firstName?: string; lastName?: string } };
-}
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient(config: {
-            client_id: string;
-            scope: string;
-            callback: (response: GoogleTokenResponse) => void;
-            error_callback?: (error: { type?: string }) => void;
-          }): { requestAccessToken(): void };
-        };
-      };
-    };
-    AppleID?: {
-      auth: {
-        init(config: {
-          clientId: string;
-          scope: string;
-          redirectURI: string;
-          usePopup: boolean;
-        }): void;
-        signIn(): Promise<AppleSignInResponse>;
-      };
-    };
-  }
-}
+type TProvider = "google" | "apple";
 
 interface SocialSignInProps {
-  /** From `useAccountSignIn` — the same session step the email form uses. */
-  signInWith: (
-    path: string,
-    body: Record<string, unknown>,
-  ) => Promise<SignInFailure | null>;
-  onError: (message: string) => void;
   /** True while any other part of the screen is busy. */
   disabled?: boolean;
 }
@@ -95,142 +47,61 @@ function SocialButton({
 }
 
 /**
- * Google and Apple, both finished in the browser.
+ * Google and Apple, both as a full-page redirect through the backend.
  *
- * Neither SDK is bundled — the scripts load lazily and only what they hand back
- * (Google's access token, Apple's identity token) is posted on. The backend
- * verifies each with its issuer, so nothing here is trusted on its own.
+ *   button -> <backend>/auth/<provider> -> the provider's consent screen
+ *          -> <backend>/auth/<provider>/callback
+ *          -> /login/<provider>/callback?code=…  (redeemed for a session there)
+ *
+ * No SDK runs in the page and no client id lives in the browser — the backend
+ * owns the whole exchange and only ever hands back a one-time code. If a
+ * provider is not configured on the server it sends the customer straight
+ * back to /login?error=<provider>, which the login form explains.
  */
-export function SocialSignIn({
-  signInWith,
-  onError,
-  disabled = false,
-}: SocialSignInProps) {
-  const [busy, setBusy] = useState<"google" | "apple" | null>(null);
+export function SocialSignIn({ disabled = false }: SocialSignInProps) {
+  const [busy, setBusy] = useState<TProvider | null>(null);
 
-  const handleGoogle = useCallback(() => {
-    if (!GOOGLE_CLIENT_ID) {
-      onError("Google sign-in is not configured yet.");
-      return;
-    }
+  // Backing out of the provider's screen restores this page from the
+  // back/forward cache, spinner and all — clear it so the buttons work again.
+  useEffect(() => {
+    const reset = (event: PageTransitionEvent) => {
+      if (event.persisted) setBusy(null);
+    };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
 
-    if (!window.google?.accounts?.oauth2) {
-      onError("Google is still loading. Try again in a moment.");
-      return;
-    }
-
-    setBusy("google");
-
-    const client = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile",
-      callback: async (response) => {
-        if (!response.access_token) {
-          setBusy(null);
-          // A closed popup is a choice, not a fault — say nothing for it.
-          if (response.error && response.error !== "access_denied") {
-            onError("Google sign-in did not complete. Please try again.");
-          }
-          return;
-        }
-
-        const failure = await signInWith("/api/account/google", {
-          token: response.access_token,
-        });
-
-        setBusy(null);
-        if (failure) onError(failure.message);
-      },
-      error_callback: () => setBusy(null),
-    });
-
-    client.requestAccessToken();
-  }, [onError, signInWith]);
-
-  const handleApple = useCallback(async () => {
-    if (!APPLE_CLIENT_ID || !APPLE_REDIRECT_URI) {
-      onError("Apple sign-in is not configured yet.");
-      return;
-    }
-
-    if (!window.AppleID) {
-      onError("Apple is still loading. Try again in a moment.");
-      return;
-    }
-
-    setBusy("apple");
-
-    try {
-      window.AppleID.auth.init({
-        clientId: APPLE_CLIENT_ID,
-        scope: "name email",
-        redirectURI: APPLE_REDIRECT_URI,
-        usePopup: true,
-      });
-
-      const response = await window.AppleID.auth.signIn();
-      const identityToken = response.authorization?.id_token;
-
-      if (!identityToken) {
-        setBusy(null);
-        onError("Apple sign-in did not complete. Please try again.");
-        return;
-      }
-
-      // Apple returns the name on the first authorization only, and never
-      // inside the token — so it is passed alongside it or lost for good.
-      const first = response.user?.name?.firstName ?? "";
-      const last = response.user?.name?.lastName ?? "";
-      const name = `${first} ${last}`.trim();
-
-      const failure = await signInWith("/api/account/apple", {
-        identityToken,
-        ...(name ? { name } : {}),
-      });
-
-      setBusy(null);
-      if (failure) onError(failure.message);
-    } catch {
-      // The SDK rejects when the customer dismisses the popup as well.
-      setBusy(null);
-    }
-  }, [onError, signInWith]);
+  const start = (provider: TProvider) => {
+    setBusy(provider);
+    // The round trip leaves the site, so the ?callbackUrl this page was opened
+    // with would be lost — keep it for the callback page to honour.
+    rememberDestination();
+    // A full-page hop to the backend (another origin), not an internal route —
+    // the provider's consent screen cannot be reached through the router.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign(`${BACKEND_URL}/auth/${provider}`);
+  };
 
   return (
-    <>
-      {GOOGLE_CLIENT_ID && (
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="lazyOnload"
-        />
-      )}
-      {APPLE_CLIENT_ID && (
-        <Script
-          src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
-          strategy="lazyOnload"
-        />
-      )}
+    <div className="flex gap-3">
+      <SocialButton
+        onClick={() => start("google")}
+        disabled={disabled || busy !== null}
+        busy={busy === "google"}
+        icon={<GoogleIcon className="size-4" />}
+      >
+        Google
+      </SocialButton>
 
-      <div className="flex gap-3">
-        <SocialButton
-          onClick={handleGoogle}
-          disabled={disabled}
-          busy={busy === "google"}
-          icon={<GoogleIcon className="size-4" />}
-        >
-          Google
-        </SocialButton>
-
-        <SocialButton
-          onClick={handleApple}
-          disabled={disabled}
-          busy={busy === "apple"}
-          icon={<AppleIcon className="size-4" />}
-        >
-          Apple
-        </SocialButton>
-      </div>
-    </>
+      <SocialButton
+        onClick={() => start("apple")}
+        disabled={disabled || busy !== null}
+        busy={busy === "apple"}
+        icon={<AppleIcon className="size-4" />}
+      >
+        Apple
+      </SocialButton>
+    </div>
   );
 }
 

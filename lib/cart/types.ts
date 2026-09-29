@@ -60,7 +60,6 @@ export interface CartItem {
   quantity: number;
   lineTotal: number;
   calories?: number | null;
-  specialInstructions?: string | null;
   prepTimeMinutes?: number | null;
   issues?: CartIssue[];
   /** False when this line alone is blocking checkout. */
@@ -99,7 +98,6 @@ export interface AddItemInput {
   variantLabel?: string | null;
   options?: OptionInput[];
   quantity?: number;
-  specialInstructions?: string;
 }
 
 /**
@@ -113,7 +111,6 @@ export interface UpdateItemInput {
   variantLabel?: string | null;
   options?: OptionInput[];
   quantity?: number;
-  specialInstructions?: string;
 }
 
 /**

@@ -6,22 +6,60 @@ import { useCallback, useState } from "react";
 
 import { AFTER_LOGIN_ROUTE } from "@/lib/auth/constants";
 
+/** Where a Google/Apple round trip parks the page it should come back to. */
+const DESTINATION_KEY = "barkeeper:after-sign-in";
+
 /**
  * Only same-origin paths are honoured. An absolute URL in `callbackUrl` would
  * otherwise turn the sign-in screen into an open redirect.
  */
+const isSafePath = (path: string | null | undefined): path is string =>
+  Boolean(path?.startsWith("/") && !path.startsWith("//"));
+
+const readStoredDestination = (): string | null => {
+  try {
+    return sessionStorage.getItem(DESTINATION_KEY);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Called just before leaving for Google or Apple: the provider round trip
+ * lands on /login/<provider>/callback, which has no `?callbackUrl` of its own.
+ */
+export function rememberDestination(): void {
+  const callbackUrl = new URLSearchParams(window.location.search).get(
+    "callbackUrl",
+  );
+
+  try {
+    if (isSafePath(callbackUrl)) {
+      sessionStorage.setItem(DESTINATION_KEY, callbackUrl);
+    } else {
+      sessionStorage.removeItem(DESTINATION_KEY);
+    }
+  } catch {
+    // Storage blocked (private mode): they simply land on the default page.
+  }
+}
+
 function intendedDestination(): string {
   if (typeof window === "undefined") return AFTER_LOGIN_ROUTE;
 
   const callbackUrl = new URLSearchParams(window.location.search).get(
     "callbackUrl",
   );
+  if (isSafePath(callbackUrl)) return callbackUrl;
 
-  if (!callbackUrl?.startsWith("/") || callbackUrl.startsWith("//")) {
-    return AFTER_LOGIN_ROUTE;
+  const stored = readStoredDestination();
+  try {
+    sessionStorage.removeItem(DESTINATION_KEY);
+  } catch {
+    // Nothing to clean up.
   }
 
-  return callbackUrl;
+  return isSafePath(stored) ? stored : AFTER_LOGIN_ROUTE;
 }
 
 export interface SignInFailure {

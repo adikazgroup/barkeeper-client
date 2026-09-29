@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { LogoutIcon, UserIcon } from "@/components/icons/Icons";
-import { CreditCard, Receipt } from "lucide-react";
+import { CreditCard, Heart, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/hooks/useLogout";
 
 /**
- * The account's three rooms, in the order a customer walks them: who you are,
- * what you ordered, what it cost.
+ * The account's rooms, in the order a customer walks them: who you are, what
+ * you ordered, what it cost — and the dishes saved for next time.
  */
 const SECTIONS = [
   {
@@ -30,6 +30,12 @@ const SECTIONS = [
     label: "Transactions",
     hint: "Payments and refunds",
     icon: CreditCard,
+  },
+  {
+    href: "/wishlist",
+    label: "Wishlist",
+    hint: "Dishes saved for later",
+    icon: Heart,
   },
 ];
 
@@ -64,7 +70,7 @@ export function ProfileNav() {
             <ul
               role="list"
               className={cn(
-                "grid grid-cols-3 gap-1 rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm",
+                "grid grid-cols-4 gap-1 rounded-full border border-border bg-card/60 p-1 backdrop-blur-sm",
                 "lg:mt-5 lg:block lg:space-y-1 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none",
               )}
             >
@@ -91,9 +97,7 @@ export function ProfileNav() {
                         <span
                           className={cn(
                             "hidden text-[11.5px] leading-normal font-normal lg:mt-0.5 lg:block",
-                            active
-                              ? "text-white/80"
-                              : "text-muted-foreground",
+                            active ? "text-white/80" : "text-muted-foreground",
                           )}
                         >
                           {section.hint}

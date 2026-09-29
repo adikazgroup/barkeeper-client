@@ -5,28 +5,27 @@
  *
  * Drawn as the home page's `Plate` is — photograph on top, name and price on
  * one baseline, a line of description underneath — so the menu and the home
- * page read as one set of cards. What the home page does not have is the order
- * controls: the size pad that slides up over the photograph, and the add
- * button on the bottom rail.
+ * page read as one set of cards.
+ *
+ * Ordering is one of exactly two things, so a customer never has to learn a
+ * third: a plain dish says "Add to cart" and goes straight on; a dish with
+ * anything to decide — a size, an option group — says "Choose options" and
+ * opens the builder, where every choice (sizes included) is made.
  */
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
-import { toast } from "sonner";
 
-import {
-  ChevronDownIcon,
-  PlusIcon,
-  ShoppingBagIcon,
-} from "@/components/icons/Icons";
+import { ShoppingBagIcon } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
+import { WishlistButton } from "@/components/food/WishlistButton";
+import { useFoodOrder } from "@/components/food/useFoodOrder";
 import { staggerChild } from "@/app/(restaurant)/_components/home/Reveal";
-import { useCart } from "@/hooks/useCart";
+import { pricedVariants } from "@/lib/cart/rules";
 import { payableOf } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import { Price } from "./price";
-import { FoodItem, FoodVariant } from "../_type";
+import { FoodItem } from "../_type";
 
 /** The board only has room for so many flags before they stop meaning much. */
 const MAX_TAGS = 2;
@@ -36,33 +35,16 @@ const CHIP =
   "rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium whitespace-nowrap text-foreground backdrop-blur-sm";
 
 export const FoodCard = ({ item }: { item: FoodItem }) => {
-  const variants = (item.variants ?? [])
-    .filter((variant) => typeof variant.price === "number")
-    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const variants = pricedVariants(item);
 
-  const priced = variants.length > 1;
-  const [open, setOpen] = useState(false);
-
-  const { addItem, pending } = useCart();
+  // True for a dish with several sizes or any option group: the button then
+  // opens the builder instead of adding at once.
+  const { order, opensBuilder, pending, inCart, builder } = useFoodOrder(item);
 
   const soleVariant = variants.length === 1 ? variants[0] : null;
 
-  const addToCart = async (variant?: FoodVariant) => {
-    setOpen(false);
-
-    const label = variant ? `${item.name} (${variant.label})` : item.name;
-    const { ok, message } = await addItem({
-      foodId: item._id,
-      variantLabel: variant?.label ?? null,
-      quantity: 1,
-    });
-
-    if (ok) toast.success(`${label} added to cart`);
-    else toast.error(message);
-  };
-
   const addable =
-    priced ||
+    variants.length > 1 ||
     payableOf(
       soleVariant ? soleVariant.price : item.price,
       soleVariant ? soleVariant.offerPrice : item.offerPrice,
@@ -93,24 +75,24 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
 
-        {item.rating ? (
-          <span
-            className={cn(
-              CHIP,
-              "absolute top-3 left-3 inline-flex items-center gap-1 tabular-nums",
-            )}
-          >
-            <Star className="size-3.5 fill-primary text-primary" />
-            {item.rating.toFixed(1)}
-          </span>
-        ) : null}
-
-        {/* The kitchen's own flags — chef's pick, new, vegetarian. */}
-        {tags.length > 0 && (
+        {/* The rating, then the kitchen's own flags — chef's pick, new,
+            vegetarian — down the left; the heart has the right corner. */}
+        {(item.rating || tags.length > 0) && (
           <ul
             role="list"
-            className="absolute top-3 right-3 flex max-w-[60%] flex-wrap justify-end gap-1"
+            className="absolute top-3 left-3 flex max-w-[70%] flex-wrap gap-1"
           >
+            {item.rating ? (
+              <li
+                className={cn(
+                  CHIP,
+                  "inline-flex items-center gap-1 tabular-nums",
+                )}
+              >
+                <Star className="size-3.5 fill-primary text-primary" />
+                {item.rating.toFixed(1)}
+              </li>
+            ) : null}
             {tags.map((tag) => (
               <li key={tag} className={CHIP}>
                 {tag}
@@ -119,61 +101,11 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
           </ul>
         )}
 
-        {priced && (
-          <div
-            id={`${item.slug}-sizes`}
-            className={cn(
-              "pointer-events-none absolute inset-x-2 bottom-2 rounded-xl border border-border bg-card/95 px-3 pt-2.5 pb-2 shadow-[0_24px_50px_-28px_rgba(0,0,0,0.6)] backdrop-blur-sm transition-all duration-300 ease-out",
-              "group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100",
-              open
-                ? "pointer-events-auto translate-y-0 opacity-100"
-                : "translate-y-2 opacity-0",
-            )}
-          >
-            <p className="mb-1.5 font-mono text-[9.5px] tracking-[0.18em] text-muted-foreground uppercase">
-              {variants.length} sizes &middot; tap to add
-            </p>
-
-            <ul role="list">
-              {variants.map((variant) => (
-                <li
-                  key={variant.label}
-                  className="border-t border-border/60 first:border-t-0"
-                >
-                  <button
-                    type="button"
-                    onClick={() => addToCart(variant)}
-                    disabled={pending}
-                    aria-label={`Add ${item.name}, ${variant.label}, to cart`}
-                    className="-mx-1.5 flex w-[calc(100%+0.75rem)] cursor-pointer items-baseline gap-2 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    <span className="truncate text-[12.5px] font-medium">
-                      {variant.label}
-                      {typeof variant.calories === "number" && (
-                        <span className="ml-1.5 text-[10.5px] font-normal text-muted-foreground">
-                          {variant.calories} cal
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      aria-hidden
-                      className="mb-0.5 h-0 flex-1 border-b border-dotted border-border"
-                    />
-                    <Price
-                      price={variant.price}
-                      offerPrice={variant.offerPrice}
-                      size="sm"
-                    />
-                    <PlusIcon
-                      aria-hidden
-                      className="size-3 shrink-0 self-center text-primary"
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <WishlistButton
+          foodId={item._id}
+          foodName={item.name}
+          className="absolute top-3 right-3"
+        />
       </div>
 
       <div className="flex flex-1 flex-col px-3 pt-5 pb-3">
@@ -182,33 +114,11 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
             {item.name}
           </h3>
 
-          {priced ? (
-            <button
-              type="button"
-              onClick={() => setOpen((wasOpen) => !wasOpen)}
-              aria-expanded={open}
-              aria-controls={`${item.slug}-sizes`}
-              className="-mx-1 -my-0.5 flex shrink-0 cursor-pointer items-baseline gap-1 rounded-md px-1 py-0.5 transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <Price
-                price={item.price}
-                offerPrice={item.offerPrice}
-                variants={item.variants}
-              />
-              <ChevronDownIcon
-                className={cn(
-                  "size-3.5 self-center text-muted-foreground transition-transform duration-300 group-hover:rotate-180",
-                  open && "rotate-180",
-                )}
-              />
-            </button>
-          ) : (
-            <Price
-              price={item.price}
-              offerPrice={item.offerPrice}
-              variants={item.variants}
-            />
-          )}
+          <Price
+            price={item.price}
+            offerPrice={item.offerPrice}
+            variants={item.variants}
+          />
         </div>
 
         <p className="mt-2 line-clamp-2 min-h-11 text-[13px] leading-[1.7] text-muted-foreground">
@@ -231,25 +141,36 @@ export const FoodCard = ({ item }: { item: FoodItem }) => {
           {addable && (
             <button
               type="button"
-              // A plate with sizes cannot be ordered blind — the button opens
-              // the pad and the reader picks one there.
-              onClick={() =>
-                priced ? setOpen(true) : addToCart(soleVariant ?? undefined)
-              }
+              // Anything to decide opens the builder; a plain dish (or one
+              // with a single size) goes straight on the docket.
+              onClick={() => order()}
               disabled={pending}
-              aria-expanded={priced ? open : undefined}
-              aria-controls={priced ? `${item.slug}-sizes` : undefined}
-              aria-label={
-                priced
-                  ? `Choose a size for ${item.name}`
+              aria-haspopup={opensBuilder ? "dialog" : undefined}
+              aria-label={`${
+                opensBuilder
+                  ? `Choose options for ${item.name}`
                   : `Add ${item.name} to cart`
-              }
-              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-transparent hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              }${inCart > 0 ? `, ${inCart} already in your cart` : ""}`}
+              className={cn(
+                "relative inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border bg-card px-4 text-[13px] font-medium transition-colors duration-200 hover:border-transparent hover:bg-primary hover:text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60",
+                inCart > 0 ? "border-primary/60" : "border-border",
+              )}
             >
               <ShoppingBagIcon aria-hidden className="size-4" />
-              {priced ? "Choose size" : "Add to cart"}
+              {opensBuilder ? "Choose options" : "Add to cart"}
+
+              {/* Already on the docket — how many, so the card says so. */}
+              {inCart > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute -top-1.5 -right-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-background ring-2 ring-background tabular-nums"
+                >
+                  {inCart > 99 ? "99+" : inCart}
+                </span>
+              )}
             </button>
           )}
+          {builder}
         </div>
       </div>
     </motion.li>

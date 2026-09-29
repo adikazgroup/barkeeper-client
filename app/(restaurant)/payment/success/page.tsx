@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * Stripe's return URL: `/payment/success?orderId=…&session_id=…`.
+ * The payment gateway's return URL: `/payment/success?orderId=…`.
  *
- * Only `orderId` is used. The session id is Stripe's own reference and the
- * backend reads it from Stripe directly when it syncs — taking a payment state
+ * Only `orderId` is used. Anything else the gateway adds (a session id) is its
+ * own reference; the backend asks the gateway directly when it syncs — taking a payment state
  * from a query string the customer could edit would be no evidence at all.
  */
 export default async function PaymentSuccessPage({

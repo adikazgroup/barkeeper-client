@@ -33,6 +33,7 @@ export const SESSION_ENDED_ROUTE = "/api/account/session-ended";
  */
 export const PROTECTED_PREFIXES = [
   "/profile",
+  "/wishlist",
   "/checkout",
   "/payment",
 ] as const;

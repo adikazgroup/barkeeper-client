@@ -99,7 +99,6 @@ export function useCart(): Cart {
       return updateItem(itemId, {
         variantLabel: item.variantLabel ?? null,
         options: optionsOf(item),
-        specialInstructions: item.specialInstructions ?? undefined,
         quantity: Math.floor(quantity),
       });
     },

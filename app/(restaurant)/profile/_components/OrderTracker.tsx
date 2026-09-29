@@ -284,7 +284,9 @@ export function OrderTracker({ orderId }: { orderId: string }) {
 
         <Fact label="Payment" icon={<Receipt className="size-3.5" />}>
           {paymentLabel(order)}
-          {order.payment?.method ? ` · ${order.payment.method}` : ""}
+          {order.payment?.paymentMethod
+            ? ` · ${order.payment.paymentMethod}`
+            : ""}
         </Fact>
       </div>
 
@@ -338,12 +340,6 @@ export function OrderTracker({ orderId }: { orderId: string }) {
                       </li>
                     ))}
                   </ul>
-                )}
-
-                {item.specialInstructions && (
-                  <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground italic">
-                    &ldquo;{item.specialInstructions}&rdquo;
-                  </p>
                 )}
               </div>
 

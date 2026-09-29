@@ -395,12 +395,6 @@ function CartRow({
               </ul>
             )}
 
-            {line.specialInstructions && (
-              <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground italic">
-                &ldquo;{line.specialInstructions}&rdquo;
-              </p>
-            )}
-
             {/* Why this line cannot be sent — sold out, off the window. The
                 backend's words, because it is the side that knows. */}
             {line.issues?.map((issue) => (

@@ -77,7 +77,6 @@ export interface OrderItem {
   quantity: number;
   lineTotal: number;
   calories?: number | null;
-  specialInstructions?: string | null;
 }
 
 /**
@@ -114,12 +113,14 @@ export interface PickupDetails {
 export interface OrderPayment {
   /** `unpaid`, `paid`, `refunded`… the backend's word. */
   status?: string | null;
+  /** The payment gateway — "stripe" today, others later. */
   provider?: string | null;
   checkoutSessionId?: string | null;
   checkoutExpiresAt?: string | null;
-  paymentIntentId?: string | null;
-  chargeId?: string | null;
-  method?: string | null;
+  providerPaymentId?: string | null;
+  providerChargeId?: string | null;
+  /** How the customer paid: "card", "paypal", … */
+  paymentMethod?: string | null;
   paidAt?: string | null;
   refundedAmount?: number | null;
   refundedAt?: string | null;
@@ -155,8 +156,13 @@ export interface Order {
   updatedAt?: string | null;
 }
 
-/** The Stripe session to send the customer to. No key is needed on this side. */
+/**
+ * The payment gateway's hosted page to send the customer to — whichever gateway
+ * the order is paid through. No key is needed on this side.
+ */
 export interface CheckoutSession {
+  /** "stripe" today; the page is opened the same way for any gateway. */
+  provider?: string | null;
   checkoutUrl: string;
   checkoutSessionId?: string;
   expiresAt?: string | null;
@@ -291,6 +297,7 @@ export function toCheckout(data: unknown): CheckoutSession | null {
   if (typeof raw.checkoutUrl !== "string" || !raw.checkoutUrl) return null;
 
   return {
+    provider: raw.provider ?? null,
     checkoutUrl: raw.checkoutUrl,
     checkoutSessionId: raw.checkoutSessionId,
     expiresAt: raw.expiresAt ?? null,

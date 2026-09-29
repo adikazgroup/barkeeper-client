@@ -1,25 +1,18 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { PaymentCancel } from "../_components/PaymentCancel";
-import { PaymentShell } from "../_components/PaymentShell";
-
-export const metadata: Metadata = {
-  title: "Payment Not Completed | Barkeeper’s",
-  description: "Your Barkeeper’s order is unpaid — pay it or call it off.",
-  robots: { index: false, follow: false },
-};
-
-/** Stripe's other return URL: `/payment/cancel?orderId=…`. */
+/**
+ * The old cancel return URL. Checkout pages opened before it moved to
+ * `/payment/failed` still send customers here, so the query is carried over.
+ */
 export default async function PaymentCancelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { orderId } = await searchParams;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    if (typeof value === "string") params.set(key, value);
+  }
 
-  return (
-    <PaymentShell badge="Not completed">
-      <PaymentCancel orderId={orderId ?? ""} />
-    </PaymentShell>
-  );
+  redirect(`/payment/failed${params.size ? `?${params}` : ""}`);
 }

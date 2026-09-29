@@ -3,19 +3,20 @@ import { NextResponse } from "next/server";
 import { exchangeForAccessToken, readJson } from "@/lib/auth/session-routes";
 
 /**
- * The browser finishes the Google flow itself and posts back whatever it got —
- * an ID token from One Tap, or an OAuth access token from the popup. The
- * backend tells the two apart, so both go over as `token` unchanged.
+ * The last leg of "Continue with Google". The backend finished the Google flow
+ * itself and sent the browser to /login/google/callback with a one-time code;
+ * that page posts the code here, and the access token that comes back becomes
+ * the NextAuth session — the same step an email sign-in ends with.
  */
 export async function POST(request: Request) {
-  const { token } = await readJson(request);
+  const { code } = await readJson(request);
 
-  if (typeof token !== "string" || !token) {
+  if (typeof code !== "string" || !code) {
     return NextResponse.json(
-      { message: "Google did not return a token. Please try again." },
+      { message: "Google did not return a sign-in code. Please try again." },
       { status: 400 },
     );
   }
 
-  return exchangeForAccessToken("/auth/google", { token });
+  return exchangeForAccessToken("/auth/google/exchange", { code });
 }

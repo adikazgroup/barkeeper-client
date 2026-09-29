@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { getAccountResult } from "@/lib/auth/account";
 import { AuthProvider } from "@/components/providers";
 import { SESSION_ENDED_ROUTE } from "@/lib/auth/constants";
+import { orderFetch } from "@/lib/orders/server";
 
 import { ProfileHero } from "./_components/ProfileHero";
 import { MobileSignOut, ProfileNav } from "./_components/ProfileNav";
@@ -49,6 +50,11 @@ export default async function ProfileLayout({
     redirect(`${SESSION_ENDED_ROUTE}?reason=${reason}&callbackUrl=/profile`);
   }
 
+  // One row is enough — only the total in `meta` is read. A failed read hides
+  // the figure rather than printing a wrong one.
+  const orders = await orderFetch("/my?limit=1");
+  const orderCount = orders.ok ? (orders.meta?.total ?? null) : null;
+
   // The account screens are the only place a client component needs the
   // session — the change-password form calls the backend as the customer — so
   // the provider is mounted here rather than around the whole app.
@@ -59,6 +65,7 @@ export default async function ProfileLayout({
           name={account.name}
           avatarUrl={account.profilePicture?.url ?? null}
           createdAt={account.createdAt}
+          orderCount={orderCount}
         />
 
         {/* The frame every room is drawn in — the same box the home page's

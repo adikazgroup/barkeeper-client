@@ -18,29 +18,53 @@ import { useAccountSignIn } from "./useAccountSignIn";
  * Notices other screens hand over on the query string. Kept here because this
  * is where every one of them lands.
  */
-const NOTICES: Record<string, { tone: "error" | "success"; message: string }> = {
-  "signed-out": { tone: "success", message: "Signed out. See you soon!" },
-  expired: {
+const NOTICES: Record<string, { tone: "error" | "success"; message: string }> =
+  {
+    "signed-out": { tone: "success", message: "Signed out. See you soon!" },
+    expired: {
+      tone: "error",
+      message: "Your session expired. Please sign in again.",
+    },
+    unavailable: {
+      tone: "error",
+      message:
+        "We could not check your session just now. Please sign in again.",
+    },
+    verified: {
+      tone: "success",
+      message: "Email verified — sign in to finish setting up.",
+    },
+    "account-deleted": {
+      tone: "success",
+      message: "Your account is closed. Sign up any time.",
+    },
+    "password-reset": {
+      tone: "success",
+      message: "Password updated. Sign in with your new one.",
+    },
+  };
+
+/**
+ * A Google/Apple round trip that failed comes back as `?error=<provider>`,
+ * sometimes with the backend's own reason (`?message=`) — "That email is
+ * already linked to a different account." is worth showing word for word.
+ */
+function socialFailureNotice(
+  params: URLSearchParams,
+): { tone: "error"; message: string } | undefined {
+  const provider = params.get("error");
+  if (provider !== "google" && provider !== "apple") return undefined;
+
+  const label = provider === "google" ? "Google" : "Apple";
+  const message = params.get("message");
+
+  return {
     tone: "error",
-    message: "Your session expired. Please sign in again.",
-  },
-  unavailable: {
-    tone: "error",
-    message: "We could not check your session just now. Please sign in again.",
-  },
-  verified: {
-    tone: "success",
-    message: "Email verified — sign in to finish setting up.",
-  },
-  "account-deleted": {
-    tone: "success",
-    message: "Your account is closed. Sign up any time.",
-  },
-  "password-reset": {
-    tone: "success",
-    message: "Password updated. Sign in with your new one.",
-  },
-};
+    message:
+      message ||
+      `${label} sign-in did not complete. Please try again, or sign in with your email.`,
+  };
+}
 
 interface Errors {
   email?: string;
@@ -60,9 +84,14 @@ export function LoginForm() {
   // Whatever screen sent them here left its note on the query string. It is
   // read straight off the URL rather than copied into state — the only thing
   // worth remembering is that they have moved on from it.
-  const reason = useSearchParams().get("reason");
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
   const [noticeDismissed, setNoticeDismissed] = useState(false);
-  const notice = !noticeDismissed && reason ? NOTICES[reason] : undefined;
+  const notice = !noticeDismissed
+    ? reason
+      ? NOTICES[reason]
+      : socialFailureNotice(searchParams)
+    : undefined;
 
   const validate = () => {
     const next: Errors = {};
@@ -126,11 +155,7 @@ export function LoginForm() {
         </AuthAlert>
       )}
 
-      <SocialSignIn
-        signInWith={signInWith}
-        onError={setFailure}
-        disabled={pending}
-      />
+      <SocialSignIn disabled={pending} />
 
       <AuthDivider label="or with email" />
 
@@ -141,7 +166,9 @@ export function LoginForm() {
           name="email"
           autoComplete="email"
           placeholder="you@example.com"
-          icon={<MailIcon className="size-4.5 text-foreground" strokeWidth={1.5} />}
+          icon={
+            <MailIcon className="size-4.5 text-foreground" strokeWidth={1.5} />
+          }
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={errors.email}
@@ -154,7 +181,12 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="Your password"
           revealable
-          icon={<LockIcon className="size-4.5 text-foreground cursor-pointer" strokeWidth={1.5} />}
+          icon={
+            <LockIcon
+              className="size-4.5 text-foreground cursor-pointer"
+              strokeWidth={1.5}
+            />
+          }
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={errors.password}
