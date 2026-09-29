@@ -7,9 +7,9 @@ import type { Cart } from "@/lib/cart/types";
  * The docket becomes an order in three moves and each one answers with a
  * different slice of the same record:
  *
- *  - `/orders/quote` prices the cart exactly as placing it would — tip, coupon,
- *    tax, pickup time — and creates nothing. It is what the checkout screen
- *    shows, re-asked every time the customer changes one of those four.
+ *  - `/orders/quote` prices the cart exactly as placing it would — coupon, tax,
+ *    pickup time — and creates nothing. It is what the checkout screen shows,
+ *    re-asked every time the customer changes the docket or the code.
  *  - `/orders` creates the order `pending` and a Stripe session with it. The
  *    only thing to do with the answer is send the customer to `checkoutUrl`.
  *  - everything under `/orders/my/*` reads or nudges an order that exists.
@@ -47,7 +47,7 @@ export interface OrderCustomer {
 }
 
 /** One chosen option on an ordered line, priced as it was at the time. */
-export interface OrderModifier {
+export interface OrderOption {
   groupId: string;
   groupName: string;
   optionName: string;
@@ -71,8 +71,8 @@ export interface OrderItem {
   image?: ApiImage | null;
   variantLabel?: string | null;
   basePrice: number;
-  modifiers?: OrderModifier[];
-  modifiersTotal?: number;
+  options?: OrderOption[];
+  optionsTotal?: number;
   unitPrice: number;
   quantity: number;
   lineTotal: number;
@@ -93,18 +93,18 @@ export interface OrderPricing {
   couponCode?: string | null;
   taxPercentage: number;
   tax: number;
+  /**
+   * Only ever non-zero on orders placed before tipping was removed — kept so
+   * those receipts still add up to what was charged.
+   */
   tipPercentage: number;
   tip: number;
   total: number;
   currency?: string | null;
 }
 
-/** When the food is to be collected. */
+/** When the food is to be collected. Every order is as soon as possible. */
 export interface PickupDetails {
-  /** `asap` or `scheduled`. */
-  scheduleType?: string | null;
-  slotStartAt?: string | null;
-  slotEndAt?: string | null;
   estimatedReadyAt?: string | null;
   timezone?: string | null;
   /** The kitchen's own phrasing of the time — printed rather than re-worded. */
@@ -190,16 +190,10 @@ export interface ReorderResult {
  * What the checkout screen sends.
  *
  * Quote and place take the same body, which is the point: the figure on screen
- * was produced by the very fields that then create the order. A tip goes as a
- * percentage *or* an amount — never both, which the backend refuses.
+ * was produced by the very fields that then create the order.
  */
 export interface OrderInput {
-  scheduleType?: "asap" | "scheduled";
-  /** ISO start of a slot. Required when `scheduled`. */
-  slotStartAt?: string;
   couponCode?: string;
-  tipPercentage?: number;
-  tipAmount?: number;
   customerNote?: string;
   phone?: string;
 }
@@ -214,8 +208,9 @@ const money = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
 
 export function toPricing(data: unknown): OrderPricing {
-  const raw = (typeof data === "object" && data !== null ? data : {}) as
-    Partial<OrderPricing>;
+  const raw = (
+    typeof data === "object" && data !== null ? data : {}
+  ) as Partial<OrderPricing>;
 
   return {
     subtotal: money(raw.subtotal),

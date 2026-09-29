@@ -96,8 +96,6 @@ export interface FoodItem {
   featuredSorting?: number | null;
   isBanner?: boolean;
   bannerSorting?: number | null;
-  /** The admin's hand-set position within its category. */
-  sortOrder?: number | null;
   category?: CategoryRef | null;
   /** Only on a food filed under a sub-category. */
   subCategory?: CategoryRef | null;

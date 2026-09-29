@@ -23,7 +23,7 @@ export interface CartIssue {
 }
 
 /** One chosen option on a line, priced. */
-export interface CartModifier {
+export interface CartOption {
   groupId: string;
   groupName: string;
   optionName: string;
@@ -51,11 +51,11 @@ export interface CartItem {
   subCategoryId?: string | null;
   /** The chosen tier on a variant-priced dish; absent on a single-price one. */
   variantLabel?: string | null;
-  /** The tier's own price, before modifiers. */
+  /** The tier's own price, before options. */
   basePrice: number;
-  modifiers?: CartModifier[];
-  modifiersTotal?: number;
-  /** Base plus modifiers, for one of them. */
+  options?: CartOption[];
+  optionsTotal?: number;
+  /** Base plus options, for one of them. */
   unitPrice: number;
   quantity: number;
   lineTotal: number;
@@ -87,7 +87,7 @@ export const EMPTY_CART: Cart = {
 };
 
 /** One option chosen, on the way in. */
-export interface ModifierInput {
+export interface OptionInput {
   groupId: string;
   optionName: string;
   quantity?: number;
@@ -97,7 +97,7 @@ export interface AddItemInput {
   foodId: string;
   /** Required on a variant-priced dish; the tier's label, verbatim. */
   variantLabel?: string | null;
-  modifiers?: ModifierInput[];
+  options?: OptionInput[];
   quantity?: number;
   specialInstructions?: string;
 }
@@ -111,7 +111,7 @@ export interface AddItemInput {
  */
 export interface UpdateItemInput {
   variantLabel?: string | null;
-  modifiers?: ModifierInput[];
+  options?: OptionInput[];
   quantity?: number;
   specialInstructions?: string;
 }

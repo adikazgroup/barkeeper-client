@@ -55,7 +55,7 @@ export async function orderFetch(
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      // A price, a slot and a payment status are all live. None of this is
+      // A price, the opening hours and a payment status are all live. None of this is
       // ever worth a cached answer.
       cache: "no-store",
     });
@@ -78,9 +78,10 @@ export async function orderFetch(
   } | null;
 
   if (!response.ok || !payload?.success) {
-    // Every refusal here is worth reading: a minimum not met, a slot gone, a
-    // paid order that only the restaurant can now cancel, ordering paused. The
-    // backend's own wording travels back rather than one flat failure line.
+    // Every refusal here is worth reading: a minimum not met, the kitchen
+    // closed, a paid order that only the restaurant can now cancel, ordering
+    // paused. The backend's own wording travels back rather than one flat
+    // failure line.
     return {
       data: null,
       meta: null,

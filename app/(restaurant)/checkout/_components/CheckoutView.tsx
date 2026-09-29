@@ -11,11 +11,10 @@ import {
   ChevronRightIcon,
   ShoppingBagIcon,
 } from "@/components/icons/Icons";
-import { Calendar, TimePicker } from "@/components/ui";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { placeOrder, quoteOrder } from "@/lib/orders/client";
-import { localNow, pickupLabel, toIsoInstant } from "@/lib/orders/format";
+import { pickupLabel } from "@/lib/orders/format";
 import type { OrderInput, OrderQuote } from "@/lib/orders/types";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
@@ -23,63 +22,12 @@ import { cn } from "@/lib/utils";
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-/** What a tip usually is, and the way out of the three. */
-const TIP_PRESETS = [0, 10, 15, 20];
-
-/**
- * When a collection slot can be asked for, on any given date.
- *
- * Two windows, not one: the kitchen runs 11am to 2am, so on any single date it
- * is open at the start of the day and again from late morning. Keep in step
- * with `SERVICE_FACTS` in `lib/dummyData/promotions.ts` — an hour promised on
- * the home page and refused here is worse than either being wrong alone.
- */
-const PICKUP_WINDOWS = [
-  { from: "00:00", to: "02:00" },
-  { from: "11:00", to: "23:45" },
-];
-
-/** A date as `YYYY-MM-DD` in the reader's own zone, not UTC. */
-function toDateKey(date: Date): string {
-  const shifted = new Date(date);
-  shifted.setMinutes(shifted.getMinutes() - shifted.getTimezoneOffset());
-  return shifted.toISOString().slice(0, 10);
-}
-
-/**
- * The same key back as a local Date at midnight.
- *
- * Handing the calendar the bare string would not do: `new Date("2026-09-19")`
- * is read as *UTC* midnight, which anywhere west of Greenwich is the evening
- * before — so the day picked and the day shown would differ by one.
- */
-function fromDateKey(key: string): Date | null {
-  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
-  if (!parts) return null;
-
-  return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
-}
-
-/** The time now, as `HH:mm`. */
-const nowClock = () => localNow().slice(11, 16);
-
 export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const router = useRouter();
 
   const { items, count, hydrated, signedOut } = useCart();
   const { applied } = useCoupon();
 
-  const [scheduleType, setScheduleType] = useState<"asap" | "scheduled">(
-    "asap",
-  );
-  // Kept as two fields rather than one `datetime-local` string: the day comes
-  // from the calendar and the time from the slot list, and they are only put
-  // back together for the backend, which still wants one instant.
-  const [slotDate, setSlotDate] = useState("");
-  const [slotTime, setSlotTime] = useState("");
-  const [tipMode, setTipMode] = useState<"percentage" | "amount">("percentage");
-  const [tipPercentage, setTipPercentage] = useState(10);
-  const [tipAmount, setTipAmount] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [phone, setPhone] = useState(defaultPhone);
 
@@ -88,24 +36,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
 
-  // Midnight, not now: the calendar compares whole days against `minDate`, so
-  // a `minDate` carrying the current time would disable today itself — and
-  // ordering for eight this evening is the commonest thing there is.
-  const today = useMemo(() => {
-    const midnight = new Date();
-    midnight.setHours(0, 0, 0, 0);
-    return midnight;
-  }, []);
-
-  const isToday = slotDate === toDateKey(today);
-
-  // Neither half alone is a slot, so the instant only exists once both are in.
-  const slotLocal = slotDate && slotTime ? `${slotDate}T${slotTime}` : "";
-  const slotStartAt = toIsoInstant(slotLocal);
   const couponCode = applied?.code ?? "";
-  const customTip = Number(tipAmount);
-  const hasCustomTip =
-    tipAmount.trim() !== "" && Number.isFinite(customTip) && customTip >= 0;
 
   /**
    * The half of the body that moves the price.
@@ -114,39 +45,16 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
    * kept out of here — otherwise every keystroke in the note would cost a
    * round trip and re-draw the total underneath the customer's hands.
    */
-  const priceInput = useMemo<OrderInput>(() => {
-    const input: OrderInput = { scheduleType };
+  const priceInput = useMemo<OrderInput>(
+    () => (couponCode ? { couponCode } : {}),
+    [couponCode],
+  );
 
-    if (scheduleType === "scheduled" && slotStartAt) {
-      input.slotStartAt = slotStartAt;
-    }
-
-    if (couponCode) input.couponCode = couponCode;
-
-    // A percentage or an amount, never both — the backend refuses the pair.
-    if (tipMode === "percentage") input.tipPercentage = tipPercentage;
-    else if (hasCustomTip) input.tipAmount = customTip;
-
-    return input;
-  }, [
-    scheduleType,
-    slotStartAt,
-    couponCode,
-    tipMode,
-    tipPercentage,
-    hasCustomTip,
-    customTip,
-  ]);
-
-  const ready = hydrated && !signedOut && items.length > 0;
-  // A scheduled pickup with no slot yet is not a question the backend can
-  // answer, so it is not asked until there is one.
-  const askable = ready && (scheduleType === "asap" || Boolean(slotStartAt));
+  const askable = hydrated && !signedOut && items.length > 0;
 
   // A quote belongs to the question that produced it. The moment the docket
-  // stops being askable — the customer switched to a scheduled pickup and has
-  // not picked a slot yet — the last figure is not this order's price any more,
-  // so it is dropped here rather than cleared out of the effect.
+  // stops being askable the last figure is not this order's price any more, so
+  // it is dropped here rather than cleared out of the effect.
   const quote = askable ? quoted : null;
 
   useEffect(() => {
@@ -154,8 +62,8 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
 
     let cancelled = false;
 
-    // Enough of a pause that dragging the tip across the presets is one quote
-    // rather than four.
+    // Enough of a pause that a burst of docket edits is one quote rather than
+    // several.
     const timer = setTimeout(async () => {
       setQuoting(true);
 
@@ -270,114 +178,15 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
               {/* Pickup time */}
               <Field
                 label="Pickup time"
-                hint="The kitchen confirms the exact minute once the order is in."
+                hint="Orders go straight to the kitchen. The counter confirms the exact minute once it is in."
               >
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                  <Choice
-                    active={scheduleType === "asap"}
-                    onClick={() => setScheduleType("asap")}
-                  >
-                    As soon as possible
-                  </Choice>
-                  <Choice
-                    active={scheduleType === "scheduled"}
-                    onClick={() => setScheduleType("scheduled")}
-                  >
-                    Pick a time
-                  </Choice>
-
-                  {scheduleType === "scheduled" && (
-                    <div className="col-span-2 grid grid-cols-2 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-                      <Calendar
-                        value={fromDateKey(slotDate)}
-                        onChange={(date) =>
-                          setSlotDate(date ? toDateKey(date) : "")
-                        }
-                        minDate={today}
-
-                        format="dd MMM yyyy"
-                        placeholder="Pick a day"
-                        allowManualInput={false}
-                        className="w-full sm:w-44"
-                        inputClass="h-9 rounded-full border-border bg-card/60 pr-4 pl-10 text-[13px] backdrop-blur-sm"
-                      />
-
-                      <TimePicker
-                        value={slotTime}
-                        onChange={setSlotTime}
-                        windows={PICKUP_WINDOWS}
-                        step={15}
-                        min={isToday ? nowClock() : undefined}
-                        disabled={!slotDate}
-                        aria-label="Pickup time"
-                        className="w-full sm:w-36"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {scheduleType === "scheduled" && !slotStartAt && (
-                  <p className="mt-2.5 text-[12px] text-muted-foreground">
-                    Pick a time to see what the order comes to.
-                  </p>
-                )}
-              </Field>
-
-              {/* Tip */}
-              <Field
-                label="Tip the kitchen"
-                hint="Goes to the people who cooked it. A percentage of the food, or a figure of your own."
-              >
-                <div className="grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
-                  {TIP_PRESETS.map((percentage) => (
-                    <Choice
-                      key={percentage}
-                      active={
-                        tipMode === "percentage" && tipPercentage === percentage
-                      }
-                      onClick={() => {
-                        setTipMode("percentage");
-                        setTipPercentage(percentage);
-                      }}
-                    >
-                      {percentage === 0 ? "No tip" : `${percentage}%`}
-                    </Choice>
-                  ))}
-
-                  <Choice
-                    active={tipMode === "amount"}
-                    onClick={() => setTipMode("amount")}
-                  >
-                    Other
-                  </Choice>
-                </div>
-
-                {tipMode === "amount" && (
-                  <div className="mt-4">
-                    <label htmlFor="tip-amount" className="sr-only">
-                      Tip amount
-                    </label>
-                    <div className="relative w-full max-w-40">
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 font-mono text-[13px] text-muted-foreground"
-                      >
-                        $
-                      </span>
-                      <input
-                        id="tip-amount"
-                        type="number"
-                        inputMode="decimal"
-                        min={0}
-                        step="0.50"
-                        value={tipAmount}
-                        onChange={(event) => setTipAmount(event.target.value)}
-                        placeholder="0.00"
-                        className="h-11 w-full rounded-full border border-border bg-card/60 pr-4 pl-8 font-mono text-[13.5px] tabular-nums backdrop-blur-sm transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
+                <p className="flex items-start gap-2 text-[13.5px] leading-[1.6]">
+                  <Clock
+                    aria-hidden
+                    className="mt-1 size-3.5 shrink-0 text-primary"
+                  />
+                  As soon as possible
+                </p>
               </Field>
 
               {/* Phone */}
@@ -477,15 +286,6 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                     value={pricing?.tax}
                   />
 
-                  <Row
-                    label={
-                      pricing?.tipPercentage
-                        ? `Tip (${pricing.tipPercentage}%)`
-                        : "Tip"
-                    }
-                    value={pricing?.tip}
-                  />
-
                   <div className="flex items-baseline justify-between gap-4 border-t border-border/50 pt-4">
                     <dt className="font-medium">Total</dt>
                     <dd className="font-mono text-[22px] tracking-[-0.02em] tabular-nums text-primary">
@@ -570,33 +370,6 @@ function Field({
 
       <div className="mt-4">{children}</div>
     </div>
-  );
-}
-
-/** The board's counter pill, doing duty as a radio. */
-function Choice({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "cursor-pointer rounded-full border px-2 py-2 text-center text-[13px] sm:px-4 font-medium tracking-[-0.01em] whitespace-nowrap transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        active
-          ? "border-primary bg-primary text-background"
-          : "border-border bg-card/60 text-muted-foreground backdrop-blur-sm hover:text-foreground",
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

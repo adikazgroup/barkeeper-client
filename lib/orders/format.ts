@@ -106,33 +106,23 @@ const titleCase = (value: string) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1) : "—";
 
 /**
- * A timestamp in the reader's own locale.
- *
- * `undefined` for the locale rather than a fixed one: the kitchen is one
- * timezone, but the person reading it may not be, and a date printed in a
- * format they do not use is a date they have to decode.
+ * Where the restaurant is — Virginia. Every time on screen is printed in this
+ * zone rather than the reader's, so "ready at 6:45 PM" means the kitchen's
+ * 6:45 whichever timezone the customer happens to be browsing from.
  */
+export const RESTAURANT_TIMEZONE = "America/New_York";
+
+/** A timestamp as the restaurant's clock reads it. */
 export function formatDateTime(value?: string | null): string {
   if (!value) return "—";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString("en-US", {
+    timeZone: RESTAURANT_TIMEZONE,
     day: "numeric",
     month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function formatTime(value?: string | null): string {
-  if (!value) return "—";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return date.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -141,29 +131,19 @@ export function formatTime(value?: string | null): string {
 /**
  * When the food is to be collected, in one line.
  *
- * The kitchen sends its own `label` and that wins whenever it is there — it
- * knows about closing times and prep windows that nothing on this side does.
- * The rest is only a fallback for an older answer that carries just the times.
+ * The kitchen sends its own `label` and that wins whenever it is there. The
+ * rest is only a fallback for an answer that carries just the time.
  */
 export function pickupLabel(order: Pick<Order, "pickupDetails">): string {
   const pickup = order.pickupDetails;
   if (!pickup) return "—";
   if (pickup.label) return pickup.label;
 
-  if (pickup.slotStartAt) {
-    const start = formatDateTime(pickup.slotStartAt);
-    return pickup.slotEndAt
-      ? `${start} – ${formatTime(pickup.slotEndAt)}`
-      : start;
-  }
-
   if (pickup.estimatedReadyAt) {
     return `Ready around ${formatDateTime(pickup.estimatedReadyAt)}`;
   }
 
-  return pickup.scheduleType === "scheduled"
-    ? "Scheduled"
-    : "As soon as possible";
+  return "As soon as possible";
 }
 
 /** How the payment stands, for the pill beside the status. */
@@ -176,25 +156,4 @@ export function paymentLabel(order: Order): string {
   if (status === "refunded") return "Refunded";
 
   return titleCase(status);
-}
-
-/**
- * A datetime-local field's value, as an ISO instant.
- *
- * The field hands back wall-clock time with no zone on it; `new Date` reads
- * that in the reader's own zone, which is the one they typed it in. Returns
- * empty for a half-typed value rather than an `Invalid Date`.
- */
-export function toIsoInstant(localValue: string): string {
-  if (!localValue) return "";
-
-  const date = new Date(localValue);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
-}
-
-/** Now, in the shape a `datetime-local` field wants, for its `min`. */
-export function localNow(): string {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  return now.toISOString().slice(0, 16);
 }
