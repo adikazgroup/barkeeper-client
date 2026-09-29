@@ -1,6 +1,7 @@
 export { Categories } from "./Categories";
 export { ClosingCta } from "./ClosingCta";
 export { Faq } from "./Faq";
+export { HideOnRoutes } from "./HideOnRoutes";
 export { Hero } from "./Hero";
 export { HeroView } from "./HeroView";
 export { HeroBackdrop } from "./HeroBackdrop";

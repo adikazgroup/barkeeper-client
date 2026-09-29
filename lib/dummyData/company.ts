@@ -10,7 +10,7 @@ export const COMPANY = {
   /** Trading name, as used in copy. */
   name: "Barkeeper",
   /** Full name used where a document needs to identify the operator. */
-  legalName: "Barkeeper Commerce",
+  legalName: "Barkeeper's Bar & grill",
   email: "ask@barkeepersdc.com",
   /** Shown on the contact page and dialled from it, so it lives here too. */
   phone: "(202) 878 8077",

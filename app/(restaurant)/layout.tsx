@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { getAccount } from "@/lib/auth/account";
 import {
   ClosingCta,
+  HideOnRoutes,
   PromoBanner,
   SiteFooter,
   SiteHeader,
@@ -54,7 +55,9 @@ export default async function RestaurantLayout({
         }
       />
       {children}
-      <ClosingCta />
+      <HideOnRoutes routes={["/unsubscribe"]}>
+        <ClosingCta />
+      </HideOnRoutes>
       <SiteFooter />
       <PromoBanner />
     </div>

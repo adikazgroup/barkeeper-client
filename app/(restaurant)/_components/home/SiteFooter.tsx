@@ -147,6 +147,8 @@ export function SiteFooter() {
           >
             <p className="text-[12.5px] text-muted-foreground">
               © {new Date().getFullYear()} {COMPANY.legalName}
+
+              
             </p>
             <p className="text-[12.5px] text-muted-foreground">
               {COMPANY.address.full}
