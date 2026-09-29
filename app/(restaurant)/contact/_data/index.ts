@@ -12,8 +12,8 @@ import { COMPANY } from "@/lib/dummyData";
 export const MAP_URL =
   "https://www.google.com/maps/search/?api=1&query=1901+C+Street+SE+Suite+B+Washington+DC+20003";
 
-/** The number as it is dialled — spaces stripped, so `tel:` links work. */
-export const TEL = `tel:${COMPANY.phone.replace(/\s/g, "")}`;
+/** The number as it is dialled — digits only, with the US country code. */
+export const TEL = `tel:+1${COMPANY.phone.replace(/\D/g, "")}`;
 
 /**
  * The week, one row per day.

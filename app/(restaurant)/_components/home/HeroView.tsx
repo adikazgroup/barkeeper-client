@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import SafeImage from "@/components/ui/SafeImage";
 
@@ -102,14 +103,11 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
     dish: dishes[seatIndex - offset],
   }));
 
+  const [pickedId, setPickedId] = useState<string | null>(null);
   const middle = dishes[CENTRE - offset] ?? dishes[0];
+  const picked = dishes.find((dish) => dish.id === pickedId) ?? middle;
 
   return (
-    // Pulled up by exactly the header's height, with that height given back as
-    // padding. The header is sticky, so it takes its 64px out of the flow and
-    // the backdrop would otherwise start below it — leaving the bar sitting on
-    // flat page background instead of on the hero's own art. This slides the
-    // section up under the transparent bar without moving a pixel of content.
     <section className="relative -mt-16 overflow-hidden pt-24 pb-14 sm:pt-28 sm:pb-16">
       <HeroBackdrop />
 
@@ -124,24 +122,24 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
               aria-hidden
               className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold tracking-wide text-background uppercase"
             >
-              New
+              CHEERS
             </span>
-            Now delivering until 2am
+            Your table is waiting!
           </motion.p>
 
           <motion.h1
             {...rise(0.1)}
-            className="mx-auto mt-5 max-w-4xl bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[38px] leading-[1.06] font-medium tracking-[-0.04em] text-balance text-transparent sm:text-[54px] lg:text-[62px]"
+            className="mx-auto mt-5 max-w-5xl bg-linear-to-br from-foreground to-foreground/55 bg-clip-text text-[38px] leading-[1.06] font-medium tracking-[-0.04em] text-balance text-transparent sm:text-[54px] lg:text-[62px]"
           >
-            Your next favourite meal is minutes away.
+
+            Drinks to Remember  Good Food. Great Nights.
           </motion.h1>
 
           <motion.p
             {...rise(0.16)}
             className="mx-auto mt-6 max-w-3xl text-[15px] leading-relaxed text-pretty text-muted-foreground sm:text-[17px]"
           >
-            Smash burgers, crispy wings and rice bowls—made fresh the moment you
-            order, and at your door while they are still hot.
+            Crafted flavors, signature drinks, and warm hospitality come together for memorable nights made to share with friends.
           </motion.p>
         </div>
       </div>
@@ -153,6 +151,7 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
           <div className="flex items-center justify-center pt-10 sm:pt-14">
             {seats.map(({ seat, seatIndex, dish }) => {
               const depth = Math.abs(CENTRE - seatIndex);
+              const isPicked = !!dish && dish.id === picked?.id;
 
               return (
                 <span
@@ -167,9 +166,16 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
                     zIndex: FAN.length - depth,
                   }}
                 >
-                  <span
+                  <button
+                    type="button"
                     title={dish?.name}
-                    className="group ani3 relative block rounded-3xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 hover:-translate-y-2 hover:shadow-2xl"
+                    disabled={!dish}
+                    aria-pressed={isPicked}
+                    onClick={() => dish && setPickedId(dish.id)}
+                    className={cn(
+                      "group ani3 relative block w-full cursor-pointer rounded-3xl border bg-card p-1.5 text-left shadow-xl shadow-black/10 hover:-translate-y-2 hover:shadow-2xl disabled:cursor-default",
+                      isPicked ? "border-primary/50" : "border-border",
+                    )}
                   >
                     <span className="relative block aspect-3/4 w-full overflow-hidden rounded-[1.2rem] bg-background/60">
                       {/* No photograph yet — the plate keeps its frame and the
@@ -185,7 +191,10 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
                         style={{
                           filter: `saturate(${1 - depth * 0.26}) contrast(${1 - depth * 0.05}) brightness(${1 - depth * 0.03})`,
                         }}
-                        className="object-cover transition-[filter] duration-500 ease-out group-hover:filter-none!"
+                        className={cn(
+                          "object-cover transition-[filter] duration-500 ease-out group-hover:filter-none!",
+                          isPicked && "filter-none!",
+                        )}
                       />
                     </span>
 
@@ -193,10 +202,10 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
                       <span
                         aria-hidden
                         className="ani3 pointer-events-none absolute inset-1.5 rounded-[1.2rem] bg-background group-hover:opacity-0"
-                        style={{ opacity: depth * 0.13 }}
+                        style={{ opacity: isPicked ? 0 : depth * 0.13 }}
                       />
                     )}
-                  </span>
+                  </button>
                 </span>
               );
             })}
@@ -204,33 +213,49 @@ export function HeroView({ dishes }: { dishes: HeroDish[] }) {
 
           <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto hidden max-w-5xl justify-between px-4 lg:flex">
             <span className="mt-4 flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-foreground shadow-lg">
-              Cooked to order
+              Made Fresh
             </span>
 
             <span className="mt-4 flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-foreground shadow-lg">
-              Delivered hot
+              Bar Perfected
             </span>
           </div>
 
-          {middle && (
-            <p className="ani2 mx-auto mt-5 flex max-w-full sm:mt-10 w-fit items-center gap-2.5 rounded-full border border-border bg-card py-1.5 pr-4 pl-1.5 shadow-lg">
-              {/* Too small for the fallback mark, so an unphotographed plate
-                  leaves the disc plain rather than cramming an icon into it. */}
-              <span className="relative block size-8 shrink-0 overflow-hidden rounded-full bg-muted">
-                {middle.src && (
-                  <Image
-                    src={middle.src}
-                    alt=""
-                    fill
-                    sizes="32px"
-                    className="object-cover"
-                  />
-                )}
-              </span>
-              <span className="text-[12px] font-semibold text-foreground">
-                {middle.name}
-              </span>
-            </p>
+          {picked && (
+            <motion.p
+              layout={!reduced}
+              transition={{ duration: 0.35, ease: EASE }}
+              aria-live="polite"
+              className="mx-auto mt-5 flex w-fit max-w-full items-center overflow-hidden rounded-full border border-border bg-card py-1.5 pr-4 pl-1.5 shadow-lg sm:mt-10"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={picked.id}
+                  initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: reduced ? 0 : -8 }}
+                  transition={{ duration: 0.25, ease: EASE }}
+                  className="flex min-w-0 items-center gap-2.5"
+                >
+                  {/* Too small for the fallback mark, so an unphotographed plate
+                      leaves the disc plain rather than cramming an icon into it. */}
+                  <span className="relative block size-8 shrink-0 overflow-hidden rounded-full bg-muted">
+                    {picked.src && (
+                      <Image
+                        src={picked.src}
+                        alt=""
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    )}
+                  </span>
+                  <span className="truncate text-[12px] font-semibold text-foreground">
+                    {picked.name}
+                  </span>
+                </motion.span>
+              </AnimatePresence>
+            </motion.p>
           )}
 
           {/* <motion.div

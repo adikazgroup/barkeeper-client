@@ -34,18 +34,18 @@ const COLUMNS: Quote[][] = [
     {
       quote:
         "Third Friday running we have ended up here. The steak and cheese is what gets us through the door; what keeps us at the table is that nobody starts stacking chairs at eleven.",
-      name: "Tanvir Ahmed",
-      role: "Board Bazar",
-      initials: "TA",
+      name: "Mike Sullivan",
+      role: "Hill East",
+      initials: "MS",
       detail: "Third Friday running",
       size: "short",
     },
     {
       quote:
         "I am the one at the table who cannot eat shellfish, and after twenty years of it I am used to being a nuisance. Here someone came out of the kitchen, sat down for a minute and went through what they could do and what they could not promise me, because the fryers are shared. Nobody has ever been that straight with me about it. We go most months now.",
-      name: "Nusrat Jahan",
-      role: "Uttara, Dhaka",
-      initials: "NJ",
+      name: "Rachel Morgan",
+      role: "Capitol Hill",
+      initials: "RM",
       detail: "Allergy noted",
       size: "tall",
     },
@@ -53,10 +53,10 @@ const COLUMNS: Quote[][] = [
   [
     {
       quote:
-        "We booked the back room for my father's sixtieth — eighteen of us, and I spent the week before it worrying. They moved the tables twice without being asked, sent the wings out in waves so nothing went cold, and turned the music down at our end once the speeches started. The bill was what they had quoted me a fortnight earlier, to the taka.",
-      name: "Farhana Islam",
-      role: "Gazipur",
-      initials: "FI",
+        "We booked the back room for my father's sixtieth — eighteen of us, and I spent the week before it worrying. They moved the tables twice without being asked, sent the wings out in waves so nothing went cold, and turned the music down at our end once the speeches started. The bill was what they had quoted me a fortnight earlier, to the dollar.",
+      name: "Jessica Carter",
+      role: "Barracks Row",
+      initials: "JC",
       detail: "Table for 18",
       size: "tall",
       lead: true,
@@ -64,9 +64,9 @@ const COLUMNS: Quote[][] = [
     {
       quote:
         "Order at one in the morning on a Friday and it still turns up hot. Third time now. I have stopped being surprised by it and started planning my week around it.",
-      name: "Rakib Hasan",
-      role: "Tongi",
-      initials: "RH",
+      name: "Kevin Brooks",
+      role: "Navy Yard",
+      initials: "KB",
       detail: "Delivered 1:10am",
       size: "short",
     },
@@ -75,18 +75,18 @@ const COLUMNS: Quote[][] = [
     {
       quote:
         "Booked a table from my phone in under a minute and it was confirmed before I put it down. No call, no waiting to hear back, and nobody had lost it when we turned up.",
-      name: "Sadia Karim",
-      role: "Joydebpur",
-      initials: "SK",
+      name: "Emily Walsh",
+      role: "Eastern Market",
+      initials: "EW",
       detail: "Booked in 40 seconds",
       size: "short",
     },
     {
       quote:
         "We order for the office most Thursdays, fifteen boxes at a time, and I am the one who gets blamed when it goes wrong. In four months they have not once mixed up whose is whose, the vegetarian ones come labelled, and twice when the kitchen was behind they messaged me before I had to ask. That last part is why we keep going back.",
-      name: "Imran Chowdhury",
-      role: "Chandana",
-      initials: "IC",
+      name: "David Reyes",
+      role: "Kingman Park",
+      initials: "DR",
       detail: "15 boxes a week",
       size: "tall",
     },

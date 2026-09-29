@@ -11,9 +11,9 @@ export const COMPANY = {
   name: "Barkeeper",
   /** Full name used where a document needs to identify the operator. */
   legalName: "Barkeeper Commerce",
-  email: "contact@barkeeper.com",
+  email: "ask@barkeepersdc.com",
   /** Shown on the contact page and dialled from it, so it lives here too. */
-  phone: "+880 1700 000000",
+  phone: "(202) 878 8077",
   address: {
     /** Street and suite — the first line of a postal address. */
     street: "1901 C Street SE, Suite B",

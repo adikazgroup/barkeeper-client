@@ -1,17 +1,3 @@
-/**
- * Single source of truth for the service facts and the running offers.
- *
- * Both are things the kitchen changes without a developer — hours move, a
- * minimum order goes up, an offer ends on Friday — so they live as plain data
- * in one file rather than being typed into the markup. Icons are named rather
- * than imported, the same way `integrations.ts` does it, so this stays data and
- * the rendering layer decides what to draw them with.
- *
- * ⚠️ The numbers and offers below are placeholders written to get the layout
- * standing up. Replace them with the real ones before this goes anywhere near
- * a customer — a promise about delivery time or price is not ours to invent.
- */
-
 export type FactIcon = "clock" | "bag" | "kitchen" | "payment";
 
 export interface ServiceFact {
@@ -27,16 +13,16 @@ export const SERVICE_FACTS: ServiceFact[] = [
   {
     id: "delivery",
     icon: "clock",
-    value: "30–45 min",
+    value: "45-60 min",
     label: "Average delivery",
   },
-  { id: "minimum", icon: "bag", value: "৳150", label: "Minimum order" },
-  { id: "hours", icon: "kitchen", value: "11am – 2am", label: "Kitchen open" },
+  { id: "minimum", icon: "bag", value: "$50", label: "Minimum order" },
+  { id: "hours", icon: "kitchen", value: "05pm – 2am", label: "Kitchen open" },
   {
     id: "payment",
     icon: "payment",
-    value: "bKash · Nagad · Card",
-    label: "Or cash on delivery",
+    value: "Visa, Mastercard, Amex",
+    label: "Or Take away",
   },
 ];
 

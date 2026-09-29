@@ -41,11 +41,10 @@ export async function Promotions() {
             )}
           >
             <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
-              Offers worth clearing an evening for
+              Offers Made for a Great Night Out
             </h2>
-            <p className="max-w-[44ch] text-[14px] leading-[1.65] text-muted-foreground">
-              The kitchen runs a couple of deals at a time. They change when the
-              week does, so what is here is what is on.
+            <p className="max-w-[50ch] text-[14px] leading-[1.65] text-muted-foreground">
+              Fresh offers, signature favorites, and limited-time deals designed to make every evening at Barkeeper’s worth coming back for.
             </p>
           </Reveal>
 

@@ -22,11 +22,10 @@ export async function PopularDishes() {
             )}
           >
             <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
-              What leaves the pass most
+              The Dishes Everyone Comes Back For
             </h2>
             <p className="max-w-[44ch] text-[14px] leading-[1.65] text-muted-foreground">
-              The plates that carry the place. Everything is cooked when you
-              order it, so nothing here has been sitting under a lamp.
+              Discover the dishes that define Barkeeper’s—freshly prepared, full of flavor, and always crowd-pleasing.
             </p>
           </Reveal>
 

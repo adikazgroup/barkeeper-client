@@ -1,15 +1,6 @@
 "use client";
 
-/**
- * The four things a hungry visitor checks before reading anything else: how
- * long, how much to start, when the kitchen is open, and what they can pay
- * with.
- *
- * Deliberately slim. It sits between two heavy visual blocks — the hero's fan
- * and the offers below — and its job is to answer, not to impress. Anything
- * taller here would read as a third billboard and push the offers under the
- * fold.
- */
+
 
 import type { ComponentType } from "react";
 import { Clock, CreditCard, ShoppingBag, UtensilsCrossed } from "lucide-react";

@@ -33,5 +33,5 @@ export function createTransport() {
 }
 
 /** Where contact messages land, and who they appear to come from. */
-export const MAIL_TO = process.env.MAIL_TO || "ask@duffysburgerandwings.com";
+export const MAIL_TO = process.env.MAIL_TO || "ask@barkeepersdc.com";
 export const MAIL_FROM = process.env.MAIL_FROM || process.env.SMTP_USER || "";

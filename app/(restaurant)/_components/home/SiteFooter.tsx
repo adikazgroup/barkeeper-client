@@ -42,17 +42,10 @@ const SOCIALS = [
   { Icon: TelegramIcon, label: "Telegram", href: "#" },
 ];
 
-/**
- * Padding sits on each cell, never on the column, so the footer's rules meet
- * the frame the way every section above it does.
- */
+
 const CELL = "px-5 sm:px-8";
 
-/**
- * The hero's picture, returning full-bleed as the footer's ground so the page
- * closes on the same image it opened with. It is drained of its own colour and
- * masked at the top, so it reads as ground rather than as a photograph.
- */
+
 function Backdrop() {
   return (
     <div
@@ -100,13 +93,11 @@ export function SiteFooter() {
                 <Logo className="h-10 w-auto sm:h-11" />
               </Link>
               <p className="mt-4 max-w-[36ch] text-[13.5px] leading-[1.7] text-muted-foreground">
-                The layer between your social channels and your store, so no
-                message goes unanswered and no order gets lost.
+                A lively neighbourhood Irish bar in Hill East — rotating taps,
+                playful cocktails, award-winning wings and a well-poured Guinness.
               </p>
 
-              {/* Ringed rather than bare: at this size loose glyphs read as
-                  debris at the bottom of the page, and the ring gives each one
-                  a hit area worth clicking. */}
+
               <ul className="mt-7 flex items-center gap-2.5">
                 {SOCIALS.map(({ Icon, label, href }) => (
                   <li key={label}>

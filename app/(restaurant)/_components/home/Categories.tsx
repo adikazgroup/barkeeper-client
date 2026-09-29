@@ -190,7 +190,7 @@ export async function Categories({
             )}
           >
             <h2 className="max-w-[18ch] text-[30px] leading-[1.05] font-medium tracking-[-0.04em] sm:text-[40px]">
-              Start with what you are in the mood for
+              Start with what you are in the mood for!
             </h2>
             <p className="max-w-[44ch] text-[14px] leading-[1.65] text-muted-foreground">
               The kitchen&rsquo;s headings, exactly as they are printed. Pick

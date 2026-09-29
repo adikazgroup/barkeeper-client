@@ -1,16 +1,5 @@
 "use client";
 
-/**
- * Questions.
- *
- * Same frame as the sections above: the ruled max-w-7xl box, a header row,
- * then two halves split by a line rather than a gutter. The left half stays
- * put while the answers scroll — it is short, and pinning it keeps the way out
- * (write to a person) in view for the whole section.
- *
- * One answer is open at a time. Six or eight expanded answers make a section
- * nobody can scan, and the closed rows are the index.
- */
 
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +8,6 @@ import { Reveal } from "./Reveal";
 import { featuredFaq } from "@/lib/dummyData";
 import { FaqAccordion } from "../FaqAccordion";
 
-/** Horizontal padding lives on each cell so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
 /* ---------------------------------------------------------------- section */
