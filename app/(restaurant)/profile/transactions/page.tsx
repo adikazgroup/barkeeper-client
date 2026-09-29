@@ -5,7 +5,7 @@ import { TransactionsView } from "../_components/TransactionsView";
 export const metadata: Metadata = {
   title: "Your Transactions | Barkeeper’s",
   description:
-    "Every payment, refund and reward on your Barkeeper’s account, with what each one was against.",
+    "Every payment and refund on your Barkeeper’s account, with the order each one was against.",
 };
 
 export default function TransactionsPage() {
@@ -16,8 +16,8 @@ export default function TransactionsPage() {
           Transactions
         </h1>
         <p className="mt-3 max-w-[56ch] text-[13.5px] leading-[1.7] text-muted-foreground">
-          Every payment, refund and reward on the account — what moved, when,
-          and which docket it was against.
+          Every payment and refund on the account — what moved, when, on which
+          card, and which order it was against.
         </p>
       </header>
 

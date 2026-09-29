@@ -373,32 +373,26 @@ function CartRow({
 
             {/* How this one was built. Two lines of the same dish differ only
                 here, so it is what tells them apart on the docket. */}
-            {line.modifiers && line.modifiers.length > 0 && (
+            {line.options && line.options.length > 0 && (
               <ul
                 role="list"
                 className="mt-2 space-y-0.5 text-[12px] leading-[1.6] text-muted-foreground"
               >
-                {line.modifiers.map((modifier) => (
+                {line.options.map((option) => (
                   <li
-                    key={`${modifier.groupId}-${modifier.optionName}`}
+                    key={`${option.groupId}-${option.optionName}`}
                     className="truncate"
                   >
-                    {modifier.quantity > 1 && `${modifier.quantity}× `}
-                    {modifier.optionName}
-                    {modifier.lineTotal > 0 && (
+                    {option.quantity > 1 && `${option.quantity}× `}
+                    {option.optionName}
+                    {option.lineTotal > 0 && (
                       <span className="ml-1 tabular-nums">
-                        +{formatMoney(modifier.lineTotal)}
+                        +{formatMoney(option.lineTotal)}
                       </span>
                     )}
                   </li>
                 ))}
               </ul>
-            )}
-
-            {line.specialInstructions && (
-              <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground italic">
-                &ldquo;{line.specialInstructions}&rdquo;
-              </p>
             )}
 
             {/* Why this line cannot be sent — sold out, off the window. The

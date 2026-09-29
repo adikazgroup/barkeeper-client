@@ -190,3 +190,24 @@ export function clearCart() {
 export function adoptCart(cart: Cart) {
   set({ cart, pending: false, status: "ready", error: null });
 }
+
+/**
+ * Line the docket up with who the layout says is signed in.
+ *
+ * Signing in moves between pages without a reload, so a docket read while
+ * signed out would otherwise keep saying "sign in to order" until a refresh.
+ */
+export function syncWithAccount(signedIn: boolean): void {
+  if (!started) return; // Nothing read yet — the first subscribe will.
+
+  if (signedIn && (state.status === "signed-out" || state.status === "error")) {
+    void refresh();
+  } else if (!signedIn && state.status !== "signed-out") {
+    set({
+      cart: EMPTY_CART,
+      status: "signed-out",
+      pending: false,
+      error: null,
+    });
+  }
+}

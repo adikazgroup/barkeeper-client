@@ -8,8 +8,8 @@ import { toQuote } from "@/lib/orders/types";
  * `POST /orders/quote` — what the docket would cost if it were placed now.
  *
  * It writes nothing, which is why the checkout screen may ask as often as it
- * likes: every change to the tip, the code or the pickup time is another quote
- * rather than a sum worked out in the browser.
+ * likes: every change to the code or the docket is another quote rather than
+ * a sum worked out in the browser.
  */
 export async function POST(request: NextRequest) {
   const { input, error } = readOrderInput(
@@ -31,8 +31,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json(
-    { quote, message: result.message },
-    { status: 200 },
-  );
+  return NextResponse.json({ quote, message: result.message }, { status: 200 });
 }

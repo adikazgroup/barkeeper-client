@@ -121,8 +121,6 @@ export interface AccountUser {
   googleId?: string | null;
   appleId?: string | null;
   status?: "active" | "inactive";
-  /** Set the first time the customer checks out. */
-  stripeCustomerId?: string | null;
   createdAt?: string;
   updatedAt?: string;
   /** Present on register only — `false` means the code did not go out. */

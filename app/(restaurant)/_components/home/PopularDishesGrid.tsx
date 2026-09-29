@@ -9,13 +9,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 
 import type { FoodItem } from "@/app/(restaurant)/menu/_type";
 import { Price } from "@/app/(restaurant)/menu/_components/price";
 import { ShoppingBagIcon } from "@/components/icons/Icons";
 import SafeImage from "@/components/ui/SafeImage";
-import { useCart } from "@/hooks/useCart";
+import { WishlistButton } from "@/components/food/WishlistButton";
+import { useFoodOrder } from "@/components/food/useFoodOrder";
 import { payableOf } from "@/lib/price";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ import { staggerChild, staggerParent } from "./Reveal";
 /** Horizontal padding lives on each row so the rules can reach the frame. */
 const CELL = "px-5 sm:px-8";
 
-/** The add control, shared by the button and the link it becomes. */
+/** The add control on the photograph. */
 const ADD_BUTTON = cn(
   "absolute right-3 bottom-3 z-10 grid size-10 place-items-center rounded-full",
   "border border-border/60 bg-background/90 text-foreground shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)] backdrop-blur-sm",
@@ -44,7 +44,7 @@ function Plate({ food }: { food: FoodItem }) {
 
   const badge = food.tags?.[0];
 
-  const { addItem, pending } = useCart();
+  const { order, opensBuilder, pending, inCart, builder } = useFoodOrder(food);
 
   const variants = (food.variants ?? []).filter(
     (variant) => typeof variant.price === "number",
@@ -55,8 +55,8 @@ function Plate({ food }: { food: FoodItem }) {
   // docket, since the plate itself carries no figure.
   const soleVariant = variants.length === 1 ? variants[0] : null;
 
-  // More than one size cannot be ordered blind. The home page has no size pad
-  // — that lives on the menu — so the control sends them there to pick.
+  // More than one size, or any option group, cannot be ordered blind — the
+  // control opens the dish builder instead of adding at once.
   const needsChoice = variants.length > 1;
 
   const addable =
@@ -65,29 +65,6 @@ function Plate({ food }: { food: FoodItem }) {
       soleVariant ? soleVariant.price : food.price,
       soleVariant ? soleVariant.offerPrice : food.offerPrice,
     ).payable !== null;
-
-  /**
-   * Put a plate on the docket.
-   *
-   * Only the dish and its tier travel: the kitchen prices the line, so nothing
-   * here sends a figure it read off the card. It can also refuse — a tier sold
-   * out, a dish outside its serving window — and when it does, its own words
-   * are what the customer sees.
-   */
-  const addToCart = async () => {
-    const label = soleVariant
-      ? `${food.name} (${soleVariant.label})`
-      : food.name;
-
-    const { ok, message } = await addItem({
-      foodId: food._id,
-      variantLabel: soleVariant?.label ?? null,
-      quantity: 1,
-    });
-
-    if (ok) toast.success(`${label} added to cart`);
-    else toast.error(message);
-  };
 
   return (
     <motion.li
@@ -117,28 +94,42 @@ function Plate({ food }: { food: FoodItem }) {
           </span>
         )}
 
+        <WishlistButton
+          foodId={food._id}
+          foodName={food.name}
+          className="absolute top-3 right-3"
+        />
+
         {/* Sits above the title's stretched link, so the card still opens the
             menu everywhere except on this one control. */}
-        {addable &&
-          (needsChoice ? (
-            <Link
-              href={href}
-              aria-label={`Choose a size for ${food.name}`}
-              className={ADD_BUTTON}
-            >
-              <ShoppingBagIcon aria-hidden className="size-4.5" />
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={addToCart}
-              disabled={pending}
-              aria-label={`Add ${food.name} to cart`}
-              className={cn(ADD_BUTTON, "cursor-pointer")}
-            >
-              <ShoppingBagIcon aria-hidden className="size-4.5" />
-            </button>
-          ))}
+        {addable && (
+          <button
+            type="button"
+            onClick={() => order()}
+            disabled={pending}
+            aria-label={`${
+              opensBuilder
+                ? `Choose options for ${food.name}`
+                : `Add ${food.name} to cart`
+            }${inCart > 0 ? `, ${inCart} already in your cart` : ""}`}
+            className={cn(
+              ADD_BUTTON,
+              "cursor-pointer",
+              inCart > 0 && "border-primary/60",
+            )}
+          >
+            <ShoppingBagIcon aria-hidden className="size-4.5" />
+            {inCart > 0 && (
+              <span
+                aria-hidden
+                className="absolute -top-1 -right-1 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-primary px-1 text-[9.5px] font-semibold text-background ring-2 ring-background tabular-nums"
+              >
+                {inCart > 99 ? "99+" : inCart}
+              </span>
+            )}
+          </button>
+        )}
+        {builder}
       </div>
 
       <div className="flex flex-1 flex-col px-3 pt-5 pb-3">

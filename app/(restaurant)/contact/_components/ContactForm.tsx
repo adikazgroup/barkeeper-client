@@ -50,7 +50,9 @@ export function ContactForm() {
         return;
       }
 
-      toast.success("Message sent — we’ll be in touch");
+      // The kitchen's own words: the message is saved, and a confirmation
+      // is on its way to the inbox they gave.
+      toast.success(data?.message || "Message sent — we’ll be in touch");
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch {
       toast.error("Could not reach the kitchen. Try again in a moment.");

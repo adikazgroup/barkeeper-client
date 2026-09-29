@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Clock, Loader2, TriangleAlert } from "lucide-react";
 
@@ -14,11 +15,12 @@ import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
 
 /**
- * Where Stripe sends a customer who paid.
+ * Where the payment gateway sends a customer who paid.
  *
  * The webhook is the real record of the payment, but it may be a second or two
  * behind the redirect — so the first thing this does is ask Stripe directly
- * through `/orders/my/:id/sync-payment`, rather than reading an order that
+ * through `/orders/my/:id/sync-payment` (which asks whichever gateway the
+ * order is on), rather than reading an order that
  * still says "pending" and telling somebody holding a receipt that they have
  * not paid.
  *
@@ -27,6 +29,7 @@ import { cn } from "@/lib/utils";
  * have already been ordered.
  */
 export function PaymentSuccess({ orderId }: { orderId: string }) {
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -40,6 +43,20 @@ export function PaymentSuccess({ orderId }: { orderId: string }) {
 
     void syncMyPayment(orderId).then((answer) => {
       if (cancelled) return;
+
+      // A declined card or a closed-out order is not a success — the
+      // failed page is where it can be paid again or called off.
+      if (
+        answer.ok &&
+        answer.data &&
+        (answer.data.payment?.status === "failed" ||
+          answer.data.status === "cancelled")
+      ) {
+        router.replace(
+          `/payment/failed?orderId=${encodeURIComponent(orderId)}`,
+        );
+        return;
+      }
 
       setChecking(false);
 
@@ -62,7 +79,7 @@ export function PaymentSuccess({ orderId }: { orderId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, router]);
 
   if (checking && orderId) {
     return (
@@ -127,7 +144,7 @@ export function PaymentSuccess({ orderId }: { orderId: string }) {
       <Lede>
         {paid
           ? "Your order is with the counter. We will have it ready at the time below."
-          : "Stripe has not confirmed this one. Nothing is lost — your orders page tracks it and you can pay again from there."}
+          : "The payment has not been confirmed yet. Nothing is lost — your orders page tracks it and you can pay again from there."}
       </Lede>
 
       {/* The docket's own line, so the customer has a reference without
@@ -149,7 +166,10 @@ export function PaymentSuccess({ orderId }: { orderId: string }) {
                 meta.className,
               )}
             >
-              <span aria-hidden className={cn("size-1.5 rounded-full", meta.dot)} />
+              <span
+                aria-hidden
+                className={cn("size-1.5 rounded-full", meta.dot)}
+              />
               {meta.label}
             </span>
           </dd>
@@ -169,7 +189,9 @@ export function PaymentSuccess({ orderId }: { orderId: string }) {
       </dl>
 
       <Actions>
-        <Primary href={`/profile/orders/${order._id}`}>Track this order</Primary>
+        <Primary href={`/profile/orders/${order._id}`}>
+          Track this order
+        </Primary>
         <Secondary href="/menu">Back to the board</Secondary>
       </Actions>
     </Panel>

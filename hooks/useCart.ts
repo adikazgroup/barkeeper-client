@@ -18,7 +18,7 @@ import type {
   Cart as CartData,
   CartItem,
   CartIssue,
-  ModifierInput,
+  OptionInput,
   UpdateItemInput,
 } from "@/lib/cart/types";
 
@@ -26,8 +26,8 @@ export type {
   AddItemInput,
   CartItem,
   CartIssue,
-  CartModifier,
-  ModifierInput,
+  CartOption,
+  OptionInput,
   UpdateItemInput,
 } from "@/lib/cart/types";
 
@@ -69,14 +69,14 @@ export interface Cart {
  * The options a line was built with, on their way back out.
  *
  * A quantity change has to send the whole line — options and quantity price
- * each other — so the priced modifiers the backend returned are folded back
+ * each other — so the priced options the backend returned are folded back
  * into the bare input shape it takes.
  */
-const modifiersOf = (item: CartItem): ModifierInput[] =>
-  (item.modifiers ?? []).map((modifier) => ({
-    groupId: modifier.groupId,
-    optionName: modifier.optionName,
-    quantity: modifier.quantity,
+const optionsOf = (item: CartItem): OptionInput[] =>
+  (item.options ?? []).map((option) => ({
+    groupId: option.groupId,
+    optionName: option.optionName,
+    quantity: option.quantity,
   }));
 
 /**
@@ -98,8 +98,7 @@ export function useCart(): Cart {
 
       return updateItem(itemId, {
         variantLabel: item.variantLabel ?? null,
-        modifiers: modifiersOf(item),
-        specialInstructions: item.specialInstructions ?? undefined,
+        options: optionsOf(item),
         quantity: Math.floor(quantity),
       });
     },

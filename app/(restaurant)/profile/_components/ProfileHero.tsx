@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import { BeamBorder } from "../../_components/home/BeamBorder";
 import { HeroBackdrop } from "../../_components/home/HeroBackdrop";
-import { demoUser, formatDate } from "../_data";
+import { formatDate } from "../_data";
 
 /**
  * The account's band.
@@ -10,8 +10,8 @@ import { demoUser, formatDate } from "../_data";
  * Drawn in the same language as the home hero, the board's and the docket's —
  * the shared backdrop, the pill badge, the gradient headline, the page's own
  * border-x frame. What differs is what sits on it: the customer, not a title,
- * so the headline is their name and the one number worth carrying (the points)
- * sits opposite it.
+ * so the headline is their name and the one number worth carrying (how many
+ * orders they have placed) sits opposite it.
  *
  * The photograph is framed the way the board frames a plate — a bordered card
  * with the picture inset — so a person and a dish are presented alike.
@@ -20,17 +20,17 @@ export function ProfileHero({
   name,
   avatarUrl,
   createdAt,
+  orderCount,
 }: {
   name: string;
   avatarUrl: string | null;
   createdAt?: string;
+  /** Orders on the account; null when the count could not be read. */
+  orderCount?: number | null;
 }) {
-  // The tier and the points have no endpoint behind them yet; the name, the
-  // photo and the join date come from the account.
-  const { avatar, tier, memberSince, loyaltyPoints } = demoUser;
-
+  // Everything here comes from the account itself — nothing is made up.
   const trimmed = name.trim();
-  const photo = avatarUrl || avatar;
+  const photo = avatarUrl;
 
   return (
     <section
@@ -48,7 +48,9 @@ export function ProfileHero({
           >
             Account
           </span>
-          {tier} · at the counter since {formatDate(createdAt ?? memberSince)}
+          {createdAt
+            ? `At the counter since ${formatDate(createdAt)}`
+            : "Welcome to the counter"}
         </p>
 
         <div className="mt-6 flex flex-col gap-5 sm:mt-7 sm:flex-row sm:gap-7 sm:items-end sm:justify-between">
@@ -88,14 +90,16 @@ export function ProfileHero({
           </div>
 
           {/* The one number worth carrying at the top of every account page. */}
-          <div className="flex shrink-0 items-baseline gap-2.5 self-start rounded-full border border-border bg-card/60 px-4 py-2 backdrop-blur-sm sm:self-auto">
-            <span className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
-              {loyaltyPoints.toLocaleString("en-IE")}
-            </span>
-            <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
-              Clover points
-            </span>
-          </div>
+          {typeof orderCount === "number" && (
+            <div className="flex shrink-0 items-baseline gap-2.5 self-start rounded-full border border-border bg-card/60 px-4 py-2 backdrop-blur-sm sm:self-auto">
+              <span className="font-mono text-[18px] tracking-[-0.02em] tabular-nums text-primary">
+                {orderCount.toLocaleString("en-US")}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+                {orderCount === 1 ? "Order" : "Orders"}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </section>

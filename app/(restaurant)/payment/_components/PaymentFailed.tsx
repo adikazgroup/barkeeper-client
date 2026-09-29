@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -10,21 +11,29 @@ import {
   cancelMyOrder,
   fetchMyOrder,
   retryMyPayment,
+  syncMyPayment,
 } from "@/lib/orders/client";
 import { pickupLabel } from "@/lib/orders/format";
 import { isCancellable, type Order } from "@/lib/orders/types";
 import { formatMoney } from "@/lib/price";
 
 /**
- * Where Stripe sends a customer who backed out.
+ * Where the payment gateway sends a customer whose payment did not complete —
+ * they backed out of the page, or the card was declined. Whichever gateway it
+ * was, the screen is the same.
  *
  * The order exists and is `pending` — leaving the payment page does not undo
  * it — so there are exactly two honest things to offer: pay it after all, or
  * call it off. Both are the backend's to decide: a checkout that expired has
  * already cancelled the order, and a retry is refused once the pickup time has
  * gone by, so its refusal is what the screen prints.
+ *
+ * It asks the gateway first (`sync-payment`) rather than trusting the URL it
+ * arrived on: a payment that went through after all is sent to the success
+ * page, and a declined card is recorded so the screen can say so.
  */
-export function PaymentCancel({ orderId }: { orderId: string }) {
+export function PaymentFailed({ orderId }: { orderId: string }) {
+  const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -36,18 +45,28 @@ export function PaymentCancel({ orderId }: { orderId: string }) {
 
     let cancelled = false;
 
-    void fetchMyOrder(orderId).then((answer) => {
+    void (async () => {
+      // The gateway's word first; a plain read if it cannot be reached.
+      let answer = await syncMyPayment(orderId);
+      if (!answer.ok || !answer.data) answer = await fetchMyOrder(orderId);
       if (cancelled) return;
+
+      if (answer.ok && answer.data?.payment?.status === "paid") {
+        router.replace(
+          `/payment/success?orderId=${encodeURIComponent(orderId)}`,
+        );
+        return;
+      }
 
       setLoading(false);
       if (answer.ok && answer.data) setOrder(answer.data);
       else setError(answer.message);
-    });
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, router]);
 
   const handleRetry = async () => {
     setBusy(true);
@@ -124,10 +143,18 @@ export function PaymentCancel({ orderId }: { orderId: string }) {
 
   const cancelled = order.status === "cancelled";
   const paid = order.payment?.status === "paid";
+  // A declined card, as the gateway reported it — not just a closed page.
+  const declined = order.payment?.status === "failed";
 
   return (
     <div>
-      <span className="mx-auto grid size-11 place-items-center rounded-full border border-border bg-card text-muted-foreground">
+      <span
+        className={
+          declined
+            ? "mx-auto grid size-11 place-items-center rounded-full border border-danger/30 bg-danger/5 text-danger"
+            : "mx-auto grid size-11 place-items-center rounded-full border border-border bg-card text-muted-foreground"
+        }
+      >
         <TriangleAlert className="size-4.5" />
       </span>
 
@@ -136,15 +163,19 @@ export function PaymentCancel({ orderId }: { orderId: string }) {
           ? "This order was cancelled"
           : paid
             ? "This one is already paid"
-            : "Nothing was charged"}
+            : declined
+              ? "Your payment didn’t go through"
+              : "Nothing was charged"}
       </Heading>
 
       <Lede>
         {cancelled
-          ? "Nothing was taken, and the kitchen was never told about it. Your plates are still on the board."
+          ? "Nothing was taken, and the kitchen was never told about it. Your plates are still in your cart."
           : paid
             ? "The payment went through after all — the kitchen has this one."
-            : "You left the payment page, so the order is sitting unpaid. Pay it now and it goes to the kitchen, or call it off."}
+            : declined
+              ? "The payment was declined, so nothing was taken and the order is sitting unpaid. Try again — another card works too — or call it off."
+              : "You left the payment page, so the order is sitting unpaid. Pay it now and it goes to the kitchen, or call it off."}
       </Lede>
 
       <dl className="mt-9 space-y-3.5 rounded-2xl border border-border bg-card/40 px-5 py-5 text-left text-[13.5px] backdrop-blur-sm">
@@ -176,7 +207,11 @@ export function PaymentCancel({ orderId }: { orderId: string }) {
             disabled={busy}
             className="group inline-flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
           >
-            {busy ? "One moment…" : "Pay for this order"}
+            {busy
+              ? "One moment…"
+              : declined
+                ? "Try payment again"
+                : "Pay for this order"}
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
               <ChevronRightIcon className="size-4" />
             </span>

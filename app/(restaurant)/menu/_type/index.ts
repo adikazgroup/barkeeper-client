@@ -17,6 +17,12 @@ export interface FoodOption {
   section?: string | null;
   sortOrder?: number | null;
   status?: string;
+  /** Off means sold out: it still prints, but it cannot be picked. */
+  isAvailable?: boolean;
+  /** Pre-ticked when the dish is opened. */
+  isDefault?: boolean;
+  /** Cap on this one line when the group allows repeats. null = the group's. */
+  maxQuantity?: number | null;
 }
 
 /**
@@ -28,12 +34,38 @@ export interface FoodOption {
 export interface OptionGroupBody {
   _id: string;
   name: string;
+  /** Helper line under the heading — "Choose up to 3". */
+  description?: string | null;
   selectionType: "choiceOf" | "addOns";
+  /** The cart refuses the line until this group has a pick. */
+  isRequired?: boolean;
+  /** Fewest picks once the group is engaged. */
+  minSelect?: number;
+  /** Most picks. 0 = no ceiling. */
+  maxSelect?: number;
+  /** How many picks come included before the upcharges start. */
+  freeSelectionCount?: number;
+  /** Whether one option may be taken more than once. */
+  allowQuantityPerOption?: boolean;
+  /** Ceiling for a repeated option, unless the option sets its own. */
+  maxQuantityPerOption?: number;
   options: FoodOption[];
   status?: string;
 }
 
-export interface FoodOptionGroup {
+/**
+ * What a food may tighten on a group it attaches — every one nullable, null
+ * meaning "whatever the group says". A food can only ever tighten; see
+ * `lib/cart/rules`.
+ */
+export interface OptionGroupOverrides {
+  isRequired?: boolean | null;
+  minSelect?: number | null;
+  maxSelect?: number | null;
+  freeSelectionCount?: number | null;
+}
+
+export interface FoodOptionGroup extends OptionGroupOverrides {
   groupId: string;
   sortOrder?: number | null;
   group: OptionGroupBody;
@@ -46,7 +78,7 @@ export interface FoodOptionGroup {
  * beside the id, so the two endpoints genuinely differ in shape.
  * `normalizeMenuFood` below is what keeps that difference out of components.
  */
-export interface MenuOptionGroup {
+export interface MenuOptionGroup extends OptionGroupOverrides {
   groupId: OptionGroupBody;
   sortOrder?: number | null;
 }
@@ -96,8 +128,10 @@ export interface FoodItem {
   featuredSorting?: number | null;
   isBanner?: boolean;
   bannerSorting?: number | null;
-  /** The admin's hand-set position within its category. */
-  sortOrder?: number | null;
+  /** Saved by the signed-in caller. Always false on the cached public reads. */
+  isWishlist?: boolean;
+  /** Off means sold out right now. */
+  isAvailable?: boolean;
   category?: CategoryRef | null;
   /** Only on a food filed under a sub-category. */
   subCategory?: CategoryRef | null;
@@ -156,10 +190,17 @@ export function normalizeMenuFood(food: MenuFood): FoodItem {
     ...rest,
     category: isCategoryRef(categoryId) ? categoryId : null,
     subCategory: isCategoryRef(subCategoryId) ? subCategoryId : null,
-    optionGroups: (optionGroups ?? []).map((entry) => ({
-      groupId: entry.groupId._id,
-      sortOrder: entry.sortOrder,
-      group: entry.groupId,
-    })),
+    optionGroups: (optionGroups ?? [])
+      // A group deleted after it was attached populates to null.
+      .filter((entry) => entry.groupId && typeof entry.groupId === "object")
+      .map((entry) => ({
+        groupId: entry.groupId._id,
+        sortOrder: entry.sortOrder,
+        isRequired: entry.isRequired,
+        minSelect: entry.minSelect,
+        maxSelect: entry.maxSelect,
+        freeSelectionCount: entry.freeSelectionCount,
+        group: entry.groupId,
+      })),
   };
 }

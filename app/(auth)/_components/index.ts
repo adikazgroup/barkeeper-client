@@ -10,5 +10,6 @@ export { LoginForm } from "./LoginForm";
 export { isCompleteOtp, OtpInput } from "./OtpInput";
 export { RegisterForm } from "./RegisterForm";
 export { ResetPasswordForm } from "./ResetPasswordForm";
+export { SocialCallback } from "./SocialCallback";
 export { AuthDivider, SocialSignIn } from "./SocialSignIn";
 export { VerifyEmailForm } from "./VerifyEmailForm";

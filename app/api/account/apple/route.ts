@@ -3,23 +3,20 @@ import { NextResponse } from "next/server";
 import { exchangeForAccessToken, readJson } from "@/lib/auth/session-routes";
 
 /**
- * Apple hands back a signed JWT plus, on the very first authorization only, the
- * customer's display name — which never appears inside the token itself. So the
- * name is forwarded when present and simply ignored by the backend for an
- * account that already exists.
+ * The last leg of "Continue with Apple". The backend finished the Apple flow
+ * itself and sent the browser to /login/apple/callback with a one-time code;
+ * that page posts the code here, and the access token that comes back becomes
+ * the NextAuth session — the same step an email sign-in ends with.
  */
 export async function POST(request: Request) {
-  const { identityToken, name } = await readJson(request);
+  const { code } = await readJson(request);
 
-  if (typeof identityToken !== "string" || !identityToken) {
+  if (typeof code !== "string" || !code) {
     return NextResponse.json(
-      { message: "Apple did not return a token. Please try again." },
+      { message: "Apple did not return a sign-in code. Please try again." },
       { status: 400 },
     );
   }
 
-  return exchangeForAccessToken("/auth/apple", {
-    identityToken,
-    ...(typeof name === "string" && name ? { name } : {}),
-  });
+  return exchangeForAccessToken("/auth/apple/exchange", { code });
 }

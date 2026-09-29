@@ -35,7 +35,14 @@ const MEDIA_HOSTS = [
   "duffy-restaurant.s3.us-east-1.amazonaws.com",
   "duffy-media.s3.amazonaws.com",
   "barkeepers-restaurant.s3.us-east-1.amazonaws.com",
-] as const;
+  // The CloudFront distribution in front of the barkeepers bucket — where
+  // every new upload's URL points (MEDIA_BASE_URL on the server).
+  "dyocseem27gp3.cloudfront.net",
+]
+  // Bare hostnames only: both uses below add the protocol themselves, so a
+  // pasted "https://…" would otherwise become "https://https://…" — an invalid
+  // CSP source the browser drops, blocking every image on that host.
+  .map((host) => host.replace(/^https?:\/\//, "").replace(/\/+$/, ""));
 
 // script-src/style-src need 'unsafe-inline': the theme-flash script in
 // app/layout.tsx and the dynamic inline `style={{ top, left, width }}`

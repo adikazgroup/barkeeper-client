@@ -284,7 +284,9 @@ export function OrderTracker({ orderId }: { orderId: string }) {
 
         <Fact label="Payment" icon={<Receipt className="size-3.5" />}>
           {paymentLabel(order)}
-          {order.payment?.method ? ` · ${order.payment.method}` : ""}
+          {order.payment?.paymentMethod
+            ? ` · ${order.payment.paymentMethod}`
+            : ""}
         </Fact>
       </div>
 
@@ -323,27 +325,21 @@ export function OrderTracker({ orderId }: { orderId: string }) {
 
                 {/* How this one was built — two lines of the same dish differ
                     only here. */}
-                {item.modifiers && item.modifiers.length > 0 && (
+                {item.options && item.options.length > 0 && (
                   <ul
                     role="list"
                     className="mt-2 space-y-0.5 text-[12px] leading-[1.6] text-muted-foreground"
                   >
-                    {item.modifiers.map((modifier) => (
+                    {item.options.map((option) => (
                       <li
-                        key={`${modifier.groupId}-${modifier.optionName}`}
+                        key={`${option.groupId}-${option.optionName}`}
                         className="truncate"
                       >
-                        {modifier.quantity > 1 && `${modifier.quantity}× `}
-                        {modifier.optionName}
+                        {option.quantity > 1 && `${option.quantity}× `}
+                        {option.optionName}
                       </li>
                     ))}
                   </ul>
-                )}
-
-                {item.specialInstructions && (
-                  <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground italic">
-                    &ldquo;{item.specialInstructions}&rdquo;
-                  </p>
                 )}
               </div>
 
