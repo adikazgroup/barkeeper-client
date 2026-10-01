@@ -22,6 +22,15 @@ export function readOrderInput(
 
   const input: OrderInput = {};
 
+  // Passed through as given; the backend checks it against the window and the
+  // grace time, so all this keeps out is something that is not a date at all.
+  if (
+    typeof raw.pickupTime === "string" &&
+    !Number.isNaN(Date.parse(raw.pickupTime))
+  ) {
+    input.pickupTime = raw.pickupTime;
+  }
+
   if (typeof raw.couponCode === "string" && raw.couponCode.trim()) {
     input.couponCode = raw.couponCode.trim();
   }

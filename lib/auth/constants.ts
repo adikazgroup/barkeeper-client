@@ -11,15 +11,14 @@ export const AUTH_ROUTES = {
 } as const;
 
 /**
- * The cookies NextAuth signs the session into — plain over http, `__Secure-`
- * prefixed once the site is on https. A session too large for one cookie is
- * split into `<name>.0`, `<name>.1`, …, so anything clearing these has to
- * sweep the numbered chunks too.
+ * The cookie NextAuth signs the session into. The name is set explicitly in
+ * `lib/auth/config.ts` rather than left at v4's default, because cookies are
+ * not scoped by port and the other localhost clients would otherwise overwrite
+ * this session. A session too large for one cookie is split into `<name>.0`,
+ * `<name>.1`, …, so anything clearing these has to sweep the numbered chunks
+ * too.
  */
-export const SESSION_COOKIES = [
-  "authjs.session-token",
-  "__Secure-authjs.session-token",
-] as const;
+export const SESSION_COOKIES = ["barkeeper.session-token"] as const;
 
 /** Clears a stale session cookie before sending the customer back to sign-in. */
 export const SESSION_ENDED_ROUTE = "/api/account/session-ended";

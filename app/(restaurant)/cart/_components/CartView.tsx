@@ -15,9 +15,11 @@ import {
   ShoppingBagIcon,
   XIcon,
 } from "@/components/icons/Icons";
+import { OrderingStatus } from "@/components/shared/OrderingStatus";
 import SafeImage from "@/components/ui/SafeImage";
 import { useCart, type CartItem, type CartResult } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { usePickupAvailability } from "@/hooks/usePickupAvailability";
 import { AUTH_ROUTES } from "@/lib/auth/constants";
 import { formatMoney } from "@/lib/price";
 import { cn } from "@/lib/utils";
@@ -56,6 +58,10 @@ export function CartView() {
   const { applied, discount } = useCoupon();
   const total = Math.max(0, subtotal - discount);
   const [busy, setBusy] = useState<string | null>(null);
+
+  // Food can go on the docket at any hour; only sending it waits for opening.
+  const ordering = usePickupAvailability();
+  const kitchenClosed = ordering.availability?.canOrder === false;
 
   if (!hydrated) return <CartSkeleton />;
   if (signedOut) return <SignedOutCart />;
@@ -102,6 +108,13 @@ export function CartView() {
   };
 
   const handleCheckout = () => {
+    if (kitchenClosed) {
+      toast.error(
+        ordering.availability?.message ?? "Restaurant is currently closed.",
+      );
+      return;
+    }
+
     // A dish can sell out after it was added, so the backend's own verdict is
     // what decides whether this goes anywhere.
     if (!isOrderable) {
@@ -151,6 +164,14 @@ export function CartView() {
                 </button>
               </Reveal>
 
+              {/* On a phone the summary sits below every line, so the reason
+                  the button is off is repeated up here. */}
+              {kitchenClosed && (
+                <div className={cn("pt-6 lg:hidden", CELL)}>
+                  <OrderingStatus state={ordering} />
+                </div>
+              )}
+
               <motion.ul
                 role="list"
                 variants={staggerParent}
@@ -185,7 +206,7 @@ export function CartView() {
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  disabled={pending || !isOrderable}
+                  disabled={pending || !isOrderable || kitchenClosed}
                   className="group inline-flex h-11 shrink-0 cursor-pointer items-center gap-3 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Checkout
@@ -278,12 +299,14 @@ export function CartView() {
                   </ul>
                 )}
 
+                <OrderingStatus state={ordering} className="mt-6" />
+
                 {/* The hero's pill button, so the one thing left to do looks
                     like every other primary ask on the site. */}
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  disabled={pending || !isOrderable}
+                  disabled={pending || !isOrderable || kitchenClosed}
                   className="group mt-7 flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   Send to the kitchen

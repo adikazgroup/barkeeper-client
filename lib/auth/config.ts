@@ -1,5 +1,5 @@
-import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import type { NextAuthOptions, User } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 import { AUTH_ROUTES } from "./constants";
 import { getMe } from "./api";
@@ -33,16 +33,48 @@ function readTokenExpiry(accessToken: string): number | null {
  * The token is not taken on trust: `GET /users/me` has to accept it before a
  * session is issued, so a made-up value gets nothing.
  */
-export const authConfig = {
-  trustHost: true,
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+export const authOptions: NextAuthOptions = {
+  // v4 reads NEXTAUTH_SECRET; AUTH_SECRET stays as a fallback so an environment
+  // still carrying the v5 name keeps signing sessions instead of failing shut.
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: AUTH_ROUTES.login,
     error: AUTH_ROUTES.login,
   },
+  // Cookies aren't scoped by port, so a distinct name keeps the other
+  // localhost clients from overwriting this session. Anything that clears
+  // these reads the list from `SESSION_COOKIES` in ./constants.
+  cookies: {
+    sessionToken: {
+      name: "barkeeper.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    callbackUrl: {
+      name: "barkeeper.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: "barkeeper.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
   providers: [
-    Credentials({
+    CredentialsProvider({
       id: "backend-token",
       name: "Duffy's account",
       credentials: {
@@ -67,7 +99,7 @@ export const authConfig = {
             accessToken,
             isEmailVerified: user.isEmailVerified,
             authProviders: user.authProviders ?? [],
-          };
+          } satisfies User;
         } catch (error) {
           console.error("Rejected an access token at sign-in:", error);
           return null;
@@ -103,7 +135,7 @@ export const authConfig = {
       session.user.authProviders = token.authProviders ?? [];
 
       // The backend would reject this token now. Say so rather than letting
-      // every signed-in call fail one by one — `SessionGuard` signs out on it.
+      // every signed-in call fail one by one — the account screens sign out on it.
       if (token.accessTokenExpires && Date.now() >= token.accessTokenExpires) {
         session.error = "AccessTokenExpired";
       }
@@ -111,4 +143,4 @@ export const authConfig = {
       return session;
     },
   },
-} satisfies NextAuthConfig;
+};

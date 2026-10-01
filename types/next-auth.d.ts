@@ -11,7 +11,7 @@ import type { DefaultSession } from "next-auth";
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
-    /** Set once the access token is past its `exp` — see `SessionGuard`. */
+    /** Set once the access token is past its `exp` — the account screens sign out on it. */
     error?: "AccessTokenExpired";
     user: {
       id: string;
@@ -28,11 +28,8 @@ declare module "next-auth" {
   }
 }
 
-/**
- * `next-auth/jwt` only re-exports this module, so the augmentation has to name
- * the module the interface actually lives in.
- */
-declare module "@auth/core/jwt" {
+/** v4 declares `JWT` in this module, so the augmentation names it directly. */
+declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
     /** Milliseconds since the epoch; `null` when the token carries no `exp`. */

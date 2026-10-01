@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Info, TriangleAlert } from "lucide-react";
+import { ChevronDown, Clock, Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -11,9 +11,19 @@ import {
   ChevronRightIcon,
   ShoppingBagIcon,
 } from "@/components/icons/Icons";
+import { OrderingStatus } from "@/components/shared/OrderingStatus";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { usePickupAvailability } from "@/hooks/usePickupAvailability";
 import { placeOrder, quoteOrder } from "@/lib/orders/client";
+
+/**
+ * The payment hop is off until Stripe has a live key — the server is still on a
+ * `sk_test_` secret, so `placeOrder` would create a real docket and then send
+ * the customer to a test checkout they cannot pay. Flip this to true once the
+ * live key is in place.
+ */
+const PAYMENT_ENABLED = false;
 import { pickupLabel } from "@/lib/orders/format";
 import type { OrderInput, OrderQuote } from "@/lib/orders/types";
 import { formatMoney } from "@/lib/price";
@@ -27,6 +37,17 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
 
   const { items, count, hydrated, signedOut } = useCart();
   const { applied } = useCoupon();
+
+  const ordering = usePickupAvailability();
+  const { availability } = ordering;
+  const kitchenClosed = availability?.canOrder === false;
+
+  const [pickupTime, setPickupTime] = useState("");
+  // Only a slot that is still on offer counts. The list refreshes every
+  // minute, so a time that has slipped under the grace time simply drops out.
+  const selectedSlot =
+    availability?.slots.find((slot) => slot.value === pickupTime) ?? null;
+  const slotExpired = Boolean(pickupTime && availability && !selectedSlot);
 
   const [customerNote, setCustomerNote] = useState("");
   const [phone, setPhone] = useState(defaultPhone);
@@ -45,12 +66,18 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
    * kept out of here — otherwise every keystroke in the note would cost a
    * round trip and re-draw the total underneath the customer's hands.
    */
+  const chosenTime = selectedSlot?.value ?? "";
   const priceInput = useMemo<OrderInput>(
-    () => (couponCode ? { couponCode } : {}),
-    [couponCode],
+    () => ({
+      ...(couponCode ? { couponCode } : {}),
+      // Priced for the chosen time, because some dishes are only served at
+      // certain hours; before a choice the kitchen prices the earliest slot.
+      ...(chosenTime ? { pickupTime: chosenTime } : {}),
+    }),
+    [couponCode, chosenTime],
   );
 
-  const askable = hydrated && !signedOut && items.length > 0;
+  const askable = hydrated && !signedOut && items.length > 0 && !kitchenClosed;
 
   // A quote belongs to the question that produced it. The moment the docket
   // stops being askable the last figure is not this order's price any more, so
@@ -95,6 +122,20 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
   if (signedOut || items.length === 0) return <NothingToCheckOut />;
 
   const handlePlace = async () => {
+    if (kitchenClosed) {
+      toast.error(availability?.message ?? "Restaurant is currently closed.");
+      return;
+    }
+
+    if (!selectedSlot) {
+      toast.error(
+        slotExpired
+          ? "That pickup time has passed. Please choose another."
+          : "Choose a pickup time to continue.",
+      );
+      return;
+    }
+
     if (!phone.trim()) {
       toast.error("A phone number is needed so the counter can reach you.");
       return;
@@ -117,6 +158,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
 
     const answer = await placeOrder({
       ...priceInput,
+      pickupTime: selectedSlot.value,
       ...(customerNote.trim() ? { customerNote: customerNote.trim() } : {}),
       phone: phone.trim(),
     });
@@ -124,6 +166,8 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
     if (!answer.ok || !answer.data) {
       setPlacing(false);
       toast.error(answer.message || "The order could not be started.");
+      // A refusal is often the clock: the slot went, or the kitchen closed.
+      void ordering.reload();
       return;
     }
 
@@ -178,15 +222,64 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
               {/* Pickup time */}
               <Field
                 label="Pickup time"
-                hint="Orders go straight to the kitchen. The counter confirms the exact minute once it is in."
+                required
+                hint={
+                  availability?.canOrder
+                    ? `Choose when you will collect it. The kitchen needs at least ${availability.orderGraceMinutes} minutes, so the earliest time is ${availability.slots[0].day === "Tomorrow" ? "tomorrow, " : ""}${availability.slots[0].label}.`
+                    : undefined
+                }
               >
-                <p className="flex items-start gap-2 text-[13.5px] leading-[1.6]">
-                  <Clock
-                    aria-hidden
-                    className="mt-1 size-3.5 shrink-0 text-primary"
-                  />
-                  As soon as possible
-                </p>
+                {ordering.loading ? (
+                  <div className="h-11 w-full max-w-sm animate-pulse rounded-full bg-muted-foreground/10" />
+                ) : availability?.canOrder ? (
+                  <>
+                    <label htmlFor="pickup-time" className="sr-only">
+                      Pickup time
+                    </label>
+                    <div className="relative max-w-sm">
+                      <Clock
+                        aria-hidden
+                        className="pointer-events-none absolute top-1/2 left-4 z-10 size-3.5 -translate-y-1/2 text-primary"
+                      />
+                      <select
+                        id="pickup-time"
+                        value={selectedSlot?.value ?? ""}
+                        onChange={(event) => setPickupTime(event.target.value)}
+                        required
+                        aria-invalid={slotExpired || undefined}
+                        className={cn(
+                          "h-11 w-full cursor-pointer appearance-none rounded-full border bg-card/60 pr-10 pl-10 text-[13.5px] backdrop-blur-sm transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/15 focus:outline-none",
+                          slotExpired ? "border-danger/50" : "border-border",
+                          !selectedSlot && "text-muted-foreground",
+                        )}
+                      >
+                        <option value="" disabled>
+                          Choose a pickup time
+                        </option>
+                        {availability.slots.map((slot) => (
+                          <option
+                            key={slot.value}
+                            value={slot.value}
+                            className="text-foreground"
+                          >
+                            {slot.day}, {slot.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        aria-hidden
+                        className="pointer-events-none absolute top-1/2 right-4 z-10 size-4 -translate-y-1/2 text-muted-foreground"
+                      />
+                    </div>
+                    {slotExpired && (
+                      <p className="mt-2 text-[12.5px] text-danger">
+                        That time has passed. Please choose another.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <OrderingStatus state={ordering} />
+                )}
               </Field>
 
               {/* Phone */}
@@ -252,10 +345,12 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   Order summary
                 </h2>
 
-                {quote && (
+                {!kitchenClosed && (
                   <p className="mt-4 flex items-start gap-2 text-[12.5px] leading-[1.6] text-muted-foreground">
                     <Clock aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-                    {pickupLabel(quote)}
+                    {selectedSlot && quote
+                      ? `Pickup ${pickupLabel(quote)}`
+                      : "No pickup time chosen yet"}
                   </p>
                 )}
 
@@ -320,10 +415,21 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                 <button
                   type="button"
                   onClick={() => void handlePlace()}
-                  disabled={placing || quoting || !quote?.isOrderable}
+                  disabled={
+                    !PAYMENT_ENABLED ||
+                    placing ||
+                    quoting ||
+                    kitchenClosed ||
+                    !selectedSlot ||
+                    !quote?.isOrderable
+                  }
                   className="group mt-7 flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-full bg-primary py-1 pr-1 pl-5 text-[14px] font-medium text-background transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
-                  {placing ? "Taking you to payment…" : "Pay and send it"}
+                  {!PAYMENT_ENABLED
+                    ? "Under construction"
+                    : placing
+                      ? "Taking you to payment…"
+                      : "Pay and send it"}
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
                     <ChevronRightIcon className="size-4" />
                   </span>
@@ -334,8 +440,9 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                     aria-hidden
                     className="mt-0.5 size-3.5 shrink-0 text-primary"
                   />
-                  Payment is taken on Stripe&rsquo;s own page. Your docket stays
-                  as it is until it goes through.
+                  {PAYMENT_ENABLED
+                    ? "Payment is taken on Stripe’s own page. Your docket stays as it is until it goes through."
+                    : "Online payment is under construction. Your docket is saved — please call the restaurant to place the order for now."}
                 </p>
               </div>
             </aside>
@@ -350,16 +457,23 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
 function Field({
   label,
   hint,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className={cn("border-b border-border/50 py-7", CELL)}>
       <h3 className="font-mono text-[10.5px] tracking-[0.16em] text-muted-foreground uppercase">
         {label}
+        {required && (
+          <span aria-hidden className="ml-1 text-primary">
+            *
+          </span>
+        )}
       </h3>
 
       {hint && (

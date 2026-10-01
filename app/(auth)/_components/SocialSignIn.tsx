@@ -10,6 +10,14 @@ import { rememberDestination } from "./useAccountSignIn";
 
 type TProvider = "google" | "apple";
 
+/**
+ * Apple sign-in is off until the Apple credentials exist: every `APPLE_*` value
+ * on the server is still blank, so the backend's own `isAppleOAuthConfigured`
+ * is false and the flow would bounce straight back to /login?error=apple.
+ * Flip this to true once the Services ID, team ID, key ID and .p8 are set.
+ */
+const APPLE_ENABLED = false;
+
 interface SocialSignInProps {
   /** True while any other part of the screen is busy. */
   disabled?: boolean;
@@ -20,12 +28,14 @@ function SocialButton({
   disabled,
   busy,
   icon,
+  title,
   children,
 }: {
   onClick: () => void;
   disabled?: boolean;
   busy: boolean;
   icon: React.ReactNode;
+  title?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -33,6 +43,7 @@ function SocialButton({
       type="button"
       onClick={onClick}
       disabled={disabled || busy}
+      title={title}
       className={cn(
         "flex h-11 flex-1 items-center justify-center gap-2.5 rounded-lg border border-border bg-card/60 px-4 text-[13.5px] font-medium text-foreground backdrop-blur-sm transition-colors",
         "hover:border-primary/40 hover:bg-primary/5",
@@ -83,25 +94,35 @@ export function SocialSignIn({ disabled = false }: SocialSignInProps) {
   };
 
   return (
-    <div className="flex gap-3">
-      <SocialButton
-        onClick={() => start("google")}
-        disabled={disabled || busy !== null}
-        busy={busy === "google"}
-        icon={<GoogleIcon className="size-4" />}
-      >
-        Google
-      </SocialButton>
+    <>
+      <div className="flex gap-3">
+        <SocialButton
+          onClick={() => start("google")}
+          disabled={disabled || busy !== null}
+          busy={busy === "google"}
+          icon={<GoogleIcon className="size-4" />}
+        >
+          Google
+        </SocialButton>
 
-      <SocialButton
-        onClick={() => start("apple")}
-        disabled={disabled || busy !== null}
-        busy={busy === "apple"}
-        icon={<AppleIcon className="size-4" />}
-      >
-        Apple
-      </SocialButton>
-    </div>
+        <SocialButton
+          onClick={() => start("apple")}
+          disabled={!APPLE_ENABLED || disabled || busy !== null}
+          busy={busy === "apple"}
+          icon={<AppleIcon className="size-4" />}
+          title={APPLE_ENABLED ? undefined : "Under construction"}
+        >
+          Apple
+        </SocialButton>
+      </div>
+
+      {!APPLE_ENABLED && (
+        <p className="mt-2.5 text-center text-[12px] text-muted-foreground">
+          Apple sign-in is under construction — please use Google or your email
+          for now.
+        </p>
+      )}
+    </>
   );
 }
 

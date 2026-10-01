@@ -77,6 +77,8 @@ export interface OrderItem {
   quantity: number;
   lineTotal: number;
   calories?: number | null;
+  /** How many of this line were refunded — out of stock, say. */
+  refundedQuantity?: number;
 }
 
 /**
@@ -102,7 +104,7 @@ export interface OrderPricing {
   currency?: string | null;
 }
 
-/** When the food is to be collected. Every order is as soon as possible. */
+/** When the food is to be collected — the time the customer chose. */
 export interface PickupDetails {
   estimatedReadyAt?: string | null;
   timezone?: string | null;
@@ -199,6 +201,8 @@ export interface ReorderResult {
  * was produced by the very fields that then create the order.
  */
 export interface OrderInput {
+  /** A slot's `value` from the availability endpoint. Required to place. */
+  pickupTime?: string;
   couponCode?: string;
   customerNote?: string;
   phone?: string;

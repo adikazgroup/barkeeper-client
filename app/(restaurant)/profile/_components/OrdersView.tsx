@@ -23,6 +23,7 @@ import {
   formatDateTime,
   paymentLabel,
   pickupLabel,
+  refundedLabel,
   statusHint,
   statusMeta,
 } from "@/lib/orders/format";
@@ -512,6 +513,11 @@ function OrderRow({
                   <p className="mt-1 truncate font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
                     {item.variantLabel ?? "Regular"} · ×{item.quantity}
                   </p>
+                  {refundedLabel(item) && (
+                    <span className="mt-1.5 inline-block rounded-full bg-violet-500/10 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-violet-700 uppercase ring-1 ring-violet-500/25 dark:text-violet-300">
+                      {refundedLabel(item)}
+                    </span>
+                  )}
                 </div>
 
                 <span className="shrink-0 font-mono text-[13.5px] tabular-nums">

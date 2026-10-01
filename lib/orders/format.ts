@@ -128,6 +128,18 @@ export function formatDateTime(value?: string | null): string {
   });
 }
 
+/** "Refunded" / "1 of 2 refunded" — or null for a line that was not. */
+export function refundedLabel(item: {
+  quantity: number;
+  refundedQuantity?: number;
+}): string | null {
+  const refunded = Math.min(item.refundedQuantity || 0, item.quantity);
+  if (refunded <= 0) return null;
+  return refunded >= item.quantity
+    ? "Refunded"
+    : `${refunded} of ${item.quantity} refunded`;
+}
+
 /**
  * When the food is to be collected, in one line.
  *
@@ -137,13 +149,35 @@ export function formatDateTime(value?: string | null): string {
 export function pickupLabel(order: Pick<Order, "pickupDetails">): string {
   const pickup = order.pickupDetails;
   if (!pickup) return "—";
-  if (pickup.label) return pickup.label;
 
-  if (pickup.estimatedReadyAt) {
-    return `Ready around ${formatDateTime(pickup.estimatedReadyAt)}`;
+  // Worked out against today rather than printed as stored: the kitchen's
+  // "Today, 7:30 PM" is only true on the day the order was placed.
+  const at = pickup.estimatedReadyAt ? new Date(pickup.estimatedReadyAt) : null;
+
+  if (at && !Number.isNaN(at.getTime())) {
+    const zone = pickup.timezone || RESTAURANT_TIMEZONE;
+    const dayOf = (date: Date) =>
+      date.toLocaleDateString("en-CA", { timeZone: zone });
+    const time = at.toLocaleTimeString("en-US", {
+      timeZone: zone,
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+    if (dayOf(at) === dayOf(today)) return `Today, ${time}`;
+    if (dayOf(at) === dayOf(tomorrow)) return `Tomorrow, ${time}`;
+
+    return `${at.toLocaleDateString("en-US", {
+      timeZone: zone,
+      month: "short",
+      day: "numeric",
+    })}, ${time}`;
   }
 
-  return "As soon as possible";
+  return pickup.label || "—";
 }
 
 /** How the payment stands, for the pill beside the status. */
