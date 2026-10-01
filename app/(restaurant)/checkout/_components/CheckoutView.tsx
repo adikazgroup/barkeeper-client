@@ -442,7 +442,7 @@ export function CheckoutView({ defaultPhone }: { defaultPhone: string }) {
                   />
                   {PAYMENT_ENABLED
                     ? "Payment is taken on Stripe’s own page. Your docket stays as it is until it goes through."
-                    : "Online payment is under construction. Your docket is saved — please call the restaurant to place the order for now."}
+                    : "Online payment is under construction. It will be available within a few days. Thank you for your patience!"}
                 </p>
               </div>
             </aside>
