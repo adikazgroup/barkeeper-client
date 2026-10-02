@@ -4,6 +4,7 @@ import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers";
+import { env } from "@/lib/env";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -17,10 +18,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * Site-wide defaults. `openGraph` and `twitter` deliberately carry no title or
+ * description: Next fills both from each page's own `title`/`description`, so
+ * a shared link previews the page it points at rather than the home page.
+ * The image comes from `app/opengraph-image.tsx`.
+ */
 export const metadata: Metadata = {
-  title: "Barkeeper — Facebook Seller Automation Platform",
+  metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
+  title: "Barkeeper’s — Irish Bar & Grill in Hill East, Washington DC",
   description:
-    "AI-powered order, customer, and inventory automation platform for Facebook sellers.",
+    "A lively neighbourhood Irish bar in Hill East, Washington DC — award-winning wings, smash burgers, rotating taps and a full bar. Order online or book a table.",
+  applicationName: "Barkeeper’s",
+  openGraph: {
+    type: "website",
+    siteName: "Barkeeper’s",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

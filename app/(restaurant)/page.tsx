@@ -11,9 +11,10 @@ import {
 } from "./_components/home";
 
 export const metadata: Metadata = {
-  title: "Barkeeper — Every message answered, every order captured",
+  title: "Barkeeper’s — Irish Bar & Grill in Hill East, Washington DC",
   description:
-    "One AI agent answers your Instagram, Facebook, Messenger and WhatsApp conversations in your own voice, confirms the sale, and writes the order into your store.",
+    "Award-winning wings, smash burgers and rice bowls from the kitchen, whiskey, draught and cocktails from the bar. Order online for collection or book a table at Barkeeper’s.",
+  alternates: { canonical: "/" },
 };
 
 export default function Home() {

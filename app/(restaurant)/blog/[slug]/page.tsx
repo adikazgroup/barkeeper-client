@@ -92,13 +92,13 @@ export async function generateMetadata({
               alt: post.featuredImage.alt || post.title,
             },
           ]
-        : [],
+        : ["/opengraph-image"],
     },
     twitter: {
       card: "summary_large_image",
       title: post.metaTitle || post.title,
       description,
-      images: post.featuredImage?.url ? [post.featuredImage.url] : [],
+      images: [post.featuredImage?.url ?? "/opengraph-image"],
     },
   };
 }
