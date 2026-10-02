@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
   title: "Barkeeper’s — Irish Bar & Grill in Hill East, Washington DC",
   description:
-    "A lively neighbourhood Irish bar in Hill East, Washington DC — award-winning wings, smash burgers, rotating taps and a full bar. Order online or book a table.",
+    "Discover Barkeeper’s Bar & Grill in Hill East, Washington DC—signature drinks, crave-worthy food and memorable nights with friends.",
   applicationName: "Barkeeper’s",
   openGraph: {
     type: "website",
