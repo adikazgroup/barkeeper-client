@@ -22,7 +22,8 @@ const geistMono = Geist_Mono({
  * Site-wide defaults. `openGraph` and `twitter` deliberately carry no title or
  * description: Next fills both from each page's own `title`/`description`, so
  * a shared link previews the page it points at rather than the home page.
- * The image comes from `app/opengraph-image.tsx`.
+ * The image comes from `app/opengraph-image.jpg`, kept as a small JPEG
+ * because WhatsApp drops preview images over ~300 KB.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL),
