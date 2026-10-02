@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Barkeeper’s Bar & Grill | Hill East, Washington DC",
   description:
-    "Discover Barkeeper’s Bar & Grill in Hill East, Washington DC—signature drinks, crave-worthy food, award-winning wings, and memorable nights with friends.",
+    "Discover Barkeeper’s Bar & Grill in Hill East, Washington DC—signature drinks, crave-worthy food and memorable nights with friends.",
   alternates: { canonical: "/" },
 };
 
